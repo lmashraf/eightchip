@@ -20,33 +20,12 @@ const int ROMSIZE = 0xFFF;
 class EightChipCPU
 {
 	private:
-		EightChipCPU(void);
-	public:
-		~EightChipCPU(void);
+		BYTE	m_GameMemory[ROMSIZE];		// 0xFFF bytes of memory.
+											// Memory Map:
+											// 0x000-0x1FF - Chip 8 interpreter (contains font set in emu)
+											// 0x050-0x0A0 - Used for the built in 4x5 pixel font set (0-F)
+											// 0x200-0xFFF - Program ROM and work RAM
 
-	public:
-		static	EightChipCPU* GetInstance(void);
-		static	EightChipCPU* m_Instance;
-
-		/**
-		* The graphics work by drawing sprites at a specific position (X,Y)
-		* on screen. 
-		* Every sprite has a width of 8 pixels and variable height.
-		* Sprite data is stored in game memory at the address I register points to.
-		* Each byte of this memory represents 1 line of the sprite to draw.
-		* Each pixel can be represented by 1 bit of the byte (8-bits).
-		* If the pixel bit is set to 0, it stays at the same state. Otherwise, it toggles.
-		* If it toggles on to off, the flag register gets set to 1. Otherwise, to 0.
-		* OpCode DXYN is responsible for the graphics drawings.
-		* The resolution can be represented as an array.
-		*/
-		BYTE	m_ScreenPixels[640][320][3];
-
-		void	CPUReset(void);
-		WORD	GetNextOpCode(void);
-
-	private:
-		BYTE	m_GameMemory[ROMSIZE];		// 0xFFF bytes of memory.		
 		BYTE	m_Registers[16];			// 16 registers, 8-bits (BYTE) each.
 											// called V0 to VF. VF doubles as the carry flag.		
 		
@@ -56,6 +35,75 @@ class EightChipCPU
 		std::vector<WORD> m_Stack;			// 16-bits stack for return addresses to memory
 											// which is used for subroutine return calls.
 											// This is emulated thanks to the pushback/pop.
+	private:
+		EightChipCPU(void);
+	public:
+		~EightChipCPU(void);
+
+		// Singleton
+		static	EightChipCPU* GetInstance(void);
+		static	EightChipCPU* m_Instance;
+
+		// Screen
+		BYTE	m_ScreenPixels[640][320][3];
+
+		void	CPUReset(void);
+
+		bool	LoadRom(const std::string& rom_filename);
+
+		// OpCodes reading and execution
+		WORD	GetNextOpCode(void);
+		void	ExecuteNextOpCode(void);
+
+		// Clear screen and draw graphics. (DecodeOpCode0)
+		void	Opcode00E0(void);
+		void	OpcodeDXYN(WORD opcode);
+
+		// Skips an instruction if keypressed or not. (DecodeOpcodeE)
+		void	OpcodeEX9E(WORD opcode);
+		void	OpcodeEXA1(WORD opcode);
+		
+		// Operations involving both VX and VY registers. (DecodeOpcode8)
+		void	Opcode8XY0(WORD opcode);
+		void	Opcode8XY1(WORD opcode);
+		void	Opcode8XY2(WORD opcode);
+		void	Opcode8XY3(WORD opcode);
+		void	Opcode8XY4(WORD opcode);
+		void	Opcode8XY5(WORD opcode);
+		void	Opcode8XY6(WORD opcode);
+		void	Opcode8XY7(WORD opcode);
+		void	Opcode8XYE(WORD opcode);
+
+		// Operations involving VX register. (DecodeOpcodeF)
+		void	OpcodeFX07(WORD opcode);
+		void	OpcodeFX0A(WORD opcode);
+		void	OpcodeFX15(WORD opcode);
+		void	OpcodeFX18(WORD opcode);
+		void	OpcodeFX1E(WORD opcode);
+		void	OpcodeFX29(WORD opcode);
+		void	OpcodeFX33(WORD opcode);
+		void	OpcodeFX55(WORD opcode);
+		void	OpcodeFX65(WORD opcode);
+
+		// Other operations
+		void	Opcode1NNN(WORD opcode);
+		void	Opcode2NNN(WORD opcode);
+		void	Opcode3XNN(WORD opcode);
+		void	Opcode4XNN(WORD opcode);
+		void	Opcode5XY0(WORD opcode);
+		void	Opcode6XNN(WORD opcode);
+		void	Opcode7XNN(WORD opcode);
+		void	Opcode9XY0(WORD opcode);
+		void	OpcodeANNN(WORD opcode);
+		void	OpcodeBNNN(WORD opcode);
+		void	OpcodeCXNN(WORD opcode);
+		void	Opcode00EE();
+		
+		// Decode OpCodes
+		void	DecodeOpCode0(void);
+		void	DecodeOpCode8(void);
+		void	DecodeOpCodeE(void);
+		void	DecodeOpCodeF(void);		
 };										
 
 

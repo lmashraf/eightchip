@@ -1,7 +1,6 @@
 #include "stdafx.h"
 #include "EightChipCPU.h"
 
-
 /*
  * Making a singleton instance of our CPU.
  */
@@ -64,14 +63,209 @@ WORD EightChipCPU::GetNextOpCode(void)
 	// Retrieve the current byte
 	res = m_GameMemory[m_ProgramCounter];
 
-	// Shift the current byte by 8 elements
-	res = res << 8;
+	// Shift the first byte by 8 to the MSB, 
+	// and get the other byte on the LSB side.
+	res = (res << 8) | m_GameMemory[m_ProgramCounter + 1];;
 
-	// Get the next byte of the OpCode
-	res = res | m_GameMemory[m_ProgramCounter + 1];
-
-	// Move 2 bytes ahead (OpCode size).
-	m_ProgramCounter = m_ProgramCounter + 2;
+	// Move 2 bytes ahead (OpCode size) to the next 'instruction'.
+	m_ProgramCounter += 2;
 
 	return res;
+}
+
+//------------------------------------------------------
+/*
+ * Operation Codes are portion of instruction which indicates
+ * the operation to be performed.
+ * The Chip-8 has 35 Opcode which are all 16-bits long:
+ *		- NNN	: address 
+ *		- NN	: 8-bit constant
+ *		- N	: 4-bit constant
+ *		- X & Y: 4-bit register identifier.
+ */
+
+// CLS
+// Clear the display
+void EightChipCPU::Opcode00E0(void)
+{
+	// TBD: this should fill m_ScreenPixels with value 255 .
+	// see. std::fill of <algorithm>
+}
+
+// RET
+// Return from a subroutine
+void EightChipCPU::Opcode00EE()
+{
+	// The interpreter sets the program counter to the address 
+	// at the top of the stack. An element is substracted implicitly from stack.
+	m_ProgramCounter = m_Stack.back();
+	m_Stack.pop_back();
+}
+
+void EightChipCPU::OpcodeDXYN(WORD opcode)
+{}
+
+//------------------------------------------------------
+void EightChipCPU::OpcodeEX9E(WORD opcode)
+{}
+
+void EightChipCPU::OpcodeEXA1(WORD opcode)
+{}
+		
+//------------------------------------------------------
+void EightChipCPU::Opcode8XY0(WORD opcode)
+{}
+
+void EightChipCPU::Opcode8XY1(WORD opcode)
+{}
+
+void EightChipCPU::Opcode8XY2(WORD opcode)
+{}
+
+void EightChipCPU::Opcode8XY3(WORD opcode)
+{}
+
+void EightChipCPU::Opcode8XY4(WORD opcode)
+{}
+
+void EightChipCPU::Opcode8XY5(WORD opcode)
+{}
+
+void EightChipCPU::Opcode8XY6(WORD opcode)
+{}
+
+void EightChipCPU::Opcode8XY7(WORD opcode)
+{}
+
+void EightChipCPU::Opcode8XYE(WORD opcode)
+{}
+
+//------------------------------------------------------
+void EightChipCPU::OpcodeFX07(WORD opcode)
+{}
+
+void EightChipCPU::OpcodeFX0A(WORD opcode)
+{}
+
+void EightChipCPU::OpcodeFX15(WORD opcode)
+{}
+
+void EightChipCPU::OpcodeFX18(WORD opcode)
+{}
+
+void EightChipCPU::OpcodeFX1E(WORD opcode)
+{}
+
+void EightChipCPU::OpcodeFX29(WORD opcode)
+{}
+
+void EightChipCPU::OpcodeFX33(WORD opcode)
+{}
+
+void EightChipCPU::OpcodeFX55(WORD opcode)
+{}
+
+void EightChipCPU::OpcodeFX65(WORD opcode)
+{}
+
+//------------------------------------------------------
+// JP addr
+// Jump to location NNN
+void EightChipCPU::Opcode1NNN(WORD opcode)
+{
+	// The interpreter sets the program counter to NNN.
+	this->m_ProgramCounter = opcode & 0x0FFF;
+}
+
+// CALL addr
+// Call subroutine at NNN
+void EightChipCPU::Opcode2NNN(WORD opcode)
+{
+	// The interpreter increments the stack pointer (implicit using std::vector)
+	// then puts the current PC on top of the stack.
+	m_Stack.push_back(m_ProgramCounter);
+
+	// The interpreter sets the program counter to NNN.
+	m_ProgramCounter = opcode & 0x0FFF;
+}
+
+void EightChipCPU::Opcode3XNN(WORD opcode)
+{}
+
+void EightChipCPU::Opcode4XNN(WORD opcode)
+{}
+
+void EightChipCPU::Opcode5XY0(WORD opcode)
+{}
+
+void EightChipCPU::Opcode6XNN(WORD opcode)
+{}
+
+void EightChipCPU::Opcode7XNN(WORD opcode)
+{}
+
+void EightChipCPU::Opcode9XY0(WORD opcode)
+{}
+
+void EightChipCPU::OpcodeANNN(WORD opcode)
+{}
+
+void EightChipCPU::OpcodeBNNN(WORD opcode)
+{}
+
+void EightChipCPU::OpcodeCXNN(WORD opcode)
+{}
+
+//------------------------------------------------------
+/**
+ * Decode Operation Codes
+ *
+ *
+ */
+void EightChipCPU::DecodeOpCode0(void)
+{}
+
+void EightChipCPU::DecodeOpCode8(void)
+{}
+
+void EightChipCPU::DecodeOpCodeE(void)
+{}
+
+void EightChipCPU::DecodeOpCodeF(void)
+{}
+
+//------------------------------------------------------
+/**
+ * This method retrieves the OpCode existing within the next 
+ * 16-bits memory block by evaluating the MSB then executes 
+ * the corresponding OpCode function.
+ * As it should be noted, the Most Significant Bit 'was' stored
+ * first.
+ */
+void EightChipCPU::ExecuteNextOpCode(void)
+{
+	// Gets the value of the current OpCode
+	WORD opcode = GetNextOpCode();
+
+	// Evaluate and execute.
+	switch(opcode & 0xF000)
+	{
+		case 0x0000: ; break;
+		case 0x1000: ; break;
+		case 0x2000: ; break;
+		case 0x3000: ; break;
+		case 0x4000: ; break;
+		case 0x5000: ; break;
+		case 0x6000: ; break;
+		case 0x7000: ; break;
+		case 0x8000: ; break;
+		case 0x9000: ; break;
+		case 0xA000: ; break;
+		case 0xB000: ; break;
+		case 0xC000: ; break;
+		case 0xD000: ; break;
+		case 0xE000: ; break;
+		case 0xF000: ; break;
+		default: break;
+	}
 }
