@@ -78,9 +78,9 @@ WORD EightChipCPU::GetNextOpCode(void)
  * Operation Codes are portion of instruction which indicates
  * the operation to be performed.
  * The Chip-8 has 35 Opcode which are all 16-bits long:
- *		- NNN	: address 
- *		- NN	: 8-bit constant
- *		- N	: 4-bit constant
+ *		- KKK	: address 
+ *		- KK	: 8-bit constant
+ *		- K	: 4-bit constant
  *		- X & Y: 4-bit register identifier.
  */
 
@@ -102,7 +102,7 @@ void EightChipCPU::Opcode00EE()
 	m_Stack.pop_back();
 }
 
-void EightChipCPU::OpcodeDXYN(WORD opcode)
+void EightChipCPU::OpcodeDXYK(WORD opcode)
 {}
 
 //------------------------------------------------------
@@ -170,50 +170,130 @@ void EightChipCPU::OpcodeFX65(WORD opcode)
 
 //------------------------------------------------------
 // JP addr
-// Jump to location NNN
-void EightChipCPU::Opcode1NNN(WORD opcode)
+// Jump to location KKK
+void EightChipCPU::Opcode1KKK(WORD opcode)
 {
-	// The interpreter sets the program counter to NNN.
+	// The interpreter sets the program counter to kkk.
 	this->m_ProgramCounter = opcode & 0x0FFF;
 }
-
+//------------------------------------------------------
 // CALL addr
-// Call subroutine at NNN
-void EightChipCPU::Opcode2NNN(WORD opcode)
+// Call subroutine at KKK
+void EightChipCPU::Opcode2KKK(WORD opcode)
 {
 	// The interpreter increments the stack pointer (implicit using std::vector)
 	// then puts the current PC on top of the stack.
 	m_Stack.push_back(m_ProgramCounter);
 
-	// The interpreter sets the program counter to NNN.
+	// The interpreter sets the program counter to KKK.
 	m_ProgramCounter = opcode & 0x0FFF;
 }
+//------------------------------------------------------
+// SE Vx, byte
+// Skip next instruction if Vx = kk
+void EightChipCPU::Opcode3XKK(WORD opcode)
+{
+	// masks off kk value
+	int kk	 = opcode & 0x00FF;
+	// masks off register Vx, then shifts it across.
+	int regVx = opcode & 0x0F00;
+	regVx >>= 8;
 
-void EightChipCPU::Opcode3XNN(WORD opcode)
-{}
+	// The interpreter compares the register Vx to kk
+	// If they are equal, the PC is incremented by 2 bytes (to the next Opcode).
+	if(m_Registers[regVx] == kk)
+		m_ProgramCounter += 2;
+}
+//------------------------------------------------------
+// SNE Vx, byte
+// Skip next instruction if Vx != kk
+void EightChipCPU::Opcode4XKK(WORD opcode)
+{
+	// masks off kk value
+	int kk    = opcode & 0x00FF;
+	// masks off register Vx, then shifts it across.
+	int regVx = opcode & 0x0F00;
+	regVx >>= 8;
 
-void EightChipCPU::Opcode4XNN(WORD opcode)
-{}
-
+	// The interpreter compares the register Vx to kk
+	// If they are not equal, the PC is incremented by 2 bytes.
+	if(m_Registers[regVx] != kk)
+		m_ProgramCounter += 2;
+}
+//------------------------------------------------------
+// SE Vx, Vy
+// Skip next instruction if Vx = Vy
 void EightChipCPU::Opcode5XY0(WORD opcode)
-{}
+{
+	// masks off registers Vx and Vy
+	int regVx = opcode & 0x0F00;
+	int regVy = opcode & 0x00F0;
+	// shifts Vx and Vy across adequately
+	regVx >>= 8;
+	regVy >>= 4;
 
-void EightChipCPU::Opcode6XNN(WORD opcode)
-{}
+	// The interpreter compares registers Vx and Vy
+	// If they are equal, the PC is incremented by 2 bytes.
+	if(m_Registers[regVx] == m_Registers[regVy])
+		m_ProgramCounter += 2;
+}
+//------------------------------------------------------
+// LD Vx, byte
+// Set Vx = kk
+void EightChipCPU::Opcode6XKK(WORD opcode)
+{
+	// masks off KK value and register Vx
+	int kk    = opcode & 0x00FF;
+	int regVx = opcode & 0x0F00;
+	// shifts across register Vx
+	regVx >>= 8 ;
 
-void EightChipCPU::Opcode7XNN(WORD opcode)
-{}
-
+	// The interpreter puts the value of kk into register Vx
+	m_Registers[regVx] = kk;
+}
+//------------------------------------------------------
+// ADD Vx, byte
+// Set Vx = Vx + kk, the carry is not affected.
+void EightChipCPU::Opcode7XKK(WORD opcode)
+{
+	// masks off kk and Vx values.
+	int kk	  = opcode && 0x00FF;
+	int regVx = opcode && 0x0F00;
+	regVx >>= 8 ;
+	
+	// Adds the value of kk to the value of the register Vx,
+	// then stores the result in Vx.
+	m_Registers[regVx] += kk;
+}
+//------------------------------------------------------
+// LD Vx, Vy
+// Set Vx = Vy
 void EightChipCPU::Opcode9XY0(WORD opcode)
-{}
+{
+	// masks off registers Vx and Vy
+	int regVx = opcode & 0x0F00;
+	int regVy = opcode & 0x00F0;
+	// shifts Vx and Vy across adequately
+	regVx >>= 8;
+	regVy >>= 4;
 
+	// Stores the value of register Vy in register Vx.
+	m_Registers[regVx] = m_Registers[regVy];
+}
+//------------------------------------------------------
+// LD I, addr
+// Set I = nnn
 void EightChipCPU::OpcodeANNN(WORD opcode)
 {}
-
+//------------------------------------------------------
+// JP V0, addr
+// Jump to location nnn + V0
 void EightChipCPU::OpcodeBNNN(WORD opcode)
 {}
-
-void EightChipCPU::OpcodeCXNN(WORD opcode)
+//------------------------------------------------------
+// RND Vx, byte
+// Set Vx = random byte AND kk
+void EightChipCPU::OpcodeCXKK(WORD opcode)
 {}
 
 //------------------------------------------------------

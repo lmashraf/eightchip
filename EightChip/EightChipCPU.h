@@ -57,7 +57,7 @@ class EightChipCPU
 
 		// Clear screen and draw graphics. (DecodeOpCode0)
 		void	Opcode00E0(void);
-		void	OpcodeDXYN(WORD opcode);
+		void	OpcodeDXYK(WORD opcode);
 
 		// Skips an instruction if keypressed or not. (DecodeOpcodeE)
 		void	OpcodeEX9E(WORD opcode);
@@ -86,17 +86,17 @@ class EightChipCPU
 		void	OpcodeFX65(WORD opcode);
 
 		// Other operations
-		void	Opcode1NNN(WORD opcode);
-		void	Opcode2NNN(WORD opcode);
-		void	Opcode3XNN(WORD opcode);
-		void	Opcode4XNN(WORD opcode);
+		void	Opcode1KKK(WORD opcode);
+		void	Opcode2KKK(WORD opcode);
+		void	Opcode3XKK(WORD opcode);
+		void	Opcode4XKK(WORD opcode);
 		void	Opcode5XY0(WORD opcode);
-		void	Opcode6XNN(WORD opcode);
-		void	Opcode7XNN(WORD opcode);
+		void	Opcode6XKK(WORD opcode);
+		void	Opcode7XKK(WORD opcode);
 		void	Opcode9XY0(WORD opcode);
 		void	OpcodeANNN(WORD opcode);
 		void	OpcodeBNNN(WORD opcode);
-		void	OpcodeCXNN(WORD opcode);
+		void	OpcodeCXKK(WORD opcode);
 		void	Opcode00EE();
 		
 		// Decode OpCodes
