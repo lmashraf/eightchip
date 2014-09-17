@@ -22,6 +22,32 @@ EightChipCPU::~EightChipCPU(void)
 {}
 
 //------------------------------------------------------
+void EightChipCPU::ClearScreen(void)
+{}
+
+//------------------------------------------------------
+bool EightChipCPU::LoadRom(const std::string& rom_filename)
+{
+	// NIY:
+	return false;
+}
+
+//------------------------------------------------------
+void EightChipCPU::DecreaseTimers(void)
+{}
+
+//------------------------------------------------------
+void EightChipCPU::KeyPressed(int key)
+{}
+//------------------------------------------------------
+void EightChipCPU::KeyReleased(int key)
+{}
+
+//-----------------------------------------------------
+void EightChipCPU::PlayBeep(void)
+{}
+
+//------------------------------------------------------
 /**
  * The game is loaded into memory 0x200 as 0 - 1FFF is for interpreter.
  * All we need to do is to load the game into 0x200 and initialise
@@ -37,6 +63,12 @@ void EightChipCPU::CPUReset(void)
 	
 	// Set all registers to 0
     memset(m_Registers, 0, sizeof(m_Registers)) ;
+	memset(m_GameMemory, 0, sizeof(m_GameMemory));
+	memset(m_KeyState, 0, sizeof(m_KeyState));
+
+	// Initialise timers
+	m_DelayTimer = 0;
+	m_SoundTimer = 0;
 }
 
 //------------------------------------------------------
@@ -101,72 +133,178 @@ void EightChipCPU::Opcode00EE()
 	m_ProgramCounter = m_Stack.back();
 	m_Stack.pop_back();
 }
-
+//------------------------------------------------------
 void EightChipCPU::OpcodeDXYK(WORD opcode)
 {}
 
 //------------------------------------------------------
 void EightChipCPU::OpcodeEX9E(WORD opcode)
 {}
-
+//------------------------------------------------------
 void EightChipCPU::OpcodeEXA1(WORD opcode)
 {}
 		
 //------------------------------------------------------
 void EightChipCPU::Opcode8XY0(WORD opcode)
 {}
-
+//------------------------------------------------------
 void EightChipCPU::Opcode8XY1(WORD opcode)
 {}
-
+//------------------------------------------------------
 void EightChipCPU::Opcode8XY2(WORD opcode)
 {}
-
+//------------------------------------------------------
 void EightChipCPU::Opcode8XY3(WORD opcode)
 {}
-
+//------------------------------------------------------
 void EightChipCPU::Opcode8XY4(WORD opcode)
 {}
-
+//------------------------------------------------------
 void EightChipCPU::Opcode8XY5(WORD opcode)
 {}
-
+//------------------------------------------------------
 void EightChipCPU::Opcode8XY6(WORD opcode)
 {}
-
+//------------------------------------------------------
 void EightChipCPU::Opcode8XY7(WORD opcode)
 {}
-
+//------------------------------------------------------
 void EightChipCPU::Opcode8XYE(WORD opcode)
 {}
 
 //------------------------------------------------------
+// LD Vx, DT
+// Set Vx = delay timer value
 void EightChipCPU::OpcodeFX07(WORD opcode)
-{}
+{
+	int regVx = opcode & 0x0F00;
+	regVx >>= 8;
 
+	// The value of DT is placed into Vx
+	m_Registers[regVx] = m_DelayTimer;
+}
+//------------------------------------------------------
+// LD Vx, K
+// Wait for a key press, store the value of the key in Vx
 void EightChipCPU::OpcodeFX0A(WORD opcode)
-{}
+{
+	// masks off Vx register
+	int regVx = opcode & 0x0F00;
+	regVx >>= 8;
 
+	// All execution stops until a key is pressed,
+	// then the value of that key is stored in Vx.
+}
+//------------------------------------------------------
+// LD DT, Vx
+// Set delay timer = Vx
 void EightChipCPU::OpcodeFX15(WORD opcode)
-{}
+{
+	// masks off Vx register
+	int regVx = opcode & 0x0F00;
+	regVx >>= 8;
 
+	// DT is set equal to the value of Vx
+	m_DelayTimer = m_Registers[regVx];
+}
+//------------------------------------------------------
+// LD ST, Vx
+// Set sound timer = Vx
 void EightChipCPU::OpcodeFX18(WORD opcode)
-{}
+{
+	// masks off Vx register
+	int regVx = opcode & 0x0F00;
+	regVx >>= 8;
 
+	// ST is set equal to the value of Vx
+	m_SoundTimer = m_Registers[regVx];
+}
+//------------------------------------------------------
+// ADD I, Vx
+// Set I = I + Vx
 void EightChipCPU::OpcodeFX1E(WORD opcode)
-{}
+{
+	// masks off Vx register
+	int regVx = opcode & 0x0F00;
+	regVx >>= 8;
 
+	// The values of I and Vx are summed,
+	// The result is stored in I.
+	m_AddressI += m_Registers[regVx];
+}
+//------------------------------------------------------
+// LD F, Vx
+// Set I = location of sprite of digit Vx
 void EightChipCPU::OpcodeFX29(WORD opcode)
-{}
+{
+	// masks off Vx register
+	int regVx = opcode & 0x0F00;
+	regVx >>= 8;
 
+	// The value of I is set to the location for the hexadecimal sprite
+	// corresponding to the value in Vx.
+	// Characters 0-F (in hexadecimal) are represented by a 4x5 font.
+	m_AddressI = m_Registers[regVx] * 5;
+
+}
+//------------------------------------------------------
+// LD B, Vx
+// Store Binary-coded decimal representation of Vx in memory locations I, I+1 and I+2
 void EightChipCPU::OpcodeFX33(WORD opcode)
-{}
+{
+	// masks off Vx register
+	int regVx = opcode & 0x0F00;
+	regVx >>= 8;
 
+	// The interpreter takes the decimal value of Vx,
+	int Vx = m_Registers[regVx];
+
+	// and places the hundreds digit in memory at location in I,
+	int hundreds			= Vx / 100;
+	m_GameMemory[m_AddressI]	= hundreds;
+	// and tens digits in I+1, 
+	int tens				= (Vx / 10) % 10;
+	m_GameMemory[m_AddressI+1]= tens;
+	//and the units digists in I+2.
+	int units	 = Vx % 10;	
+	m_GameMemory[m_AddressI+2]= units;
+}
+//------------------------------------------------------
+// LD [I], Vx
+// Stores registers V0 through Vx in memory starting at location I
 void EightChipCPU::OpcodeFX55(WORD opcode)
-{}
+{
+	// masks off Vx register
+	int regVx = opcode & 0x0F00;
+	regVx >>= 8;
 
+	// The interpreter copies the values of registers V0 through Vx
+	// into memory, starting at the address in I
+	for(int i = 0; i <= regVx; i++)
+	{
+		m_GameMemory[m_AddressI + i] = m_Registers[i];
+	}
+
+	m_AddressI = m_AddressI + regVx + 1;
+}
+//------------------------------------------------------
+// LD Vx, [I]
+// Read registers V0 through Vx from memory starting at location I
 void EightChipCPU::OpcodeFX65(WORD opcode)
-{}
+{
+	// masks off Vx register
+	int regVx = opcode & 0x0F00;
+	regVx >>= 8;
+
+	// The interpreter reads values from memory starting at location I
+	// into registers V0 through Vx.
+	for (int i = 0 ; i <= regVx; i++)
+	{
+		m_Registers[i] = m_GameMemory[m_AddressI+i]  ;
+	}
+
+	m_AddressI= m_AddressI + regVx + 1 ;
+}
 
 //------------------------------------------------------
 // JP addr
@@ -284,17 +422,41 @@ void EightChipCPU::Opcode9XY0(WORD opcode)
 // LD I, addr
 // Set I = nnn
 void EightChipCPU::OpcodeANNN(WORD opcode)
-{}
+{
+	// masks off nnn
+	int nnn = opcode & 0x0FFF;
+
+	// The value of register I is set to nnn
+	m_AddressI = nnn;
+}
 //------------------------------------------------------
 // JP V0, addr
 // Jump to location nnn + V0
 void EightChipCPU::OpcodeBNNN(WORD opcode)
-{}
+{
+	// masks off nnn
+	int nnn = opcode & 0x0FFF;
+
+	// The program counter is set to nnn plus the value of V0
+	m_ProgramCounter = m_Registers[0] + nnn;
+
+}
 //------------------------------------------------------
 // RND Vx, byte
 // Set Vx = random byte AND kk
 void EightChipCPU::OpcodeCXKK(WORD opcode)
-{}
+{
+	// masks off kk and the Vx register
+	int kk		= opcode & 0x00FF;
+	int regVx   = opcode & 0x0F00;
+	
+	regVx >>= 8,
+
+	// The interpreter generates a random number from 0 to 255
+	// which is then AND'd with the value of kk.
+	// The results are stored in Vx. (see. 8XY2 for more details on AND)
+	m_Registers[regVx] = (rand() % 256) & kk;
+}
 
 //------------------------------------------------------
 /**

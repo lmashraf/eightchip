@@ -20,6 +20,8 @@ const int ROMSIZE = 0xFFF;
 class EightChipCPU
 {
 	private:
+		static	EightChipCPU* m_Instance;	// this instance
+
 		BYTE	m_GameMemory[ROMSIZE];		// 0xFFF bytes of memory.
 											// Memory Map:
 											// 0x000-0x1FF - Chip 8 interpreter (contains font set in emu)
@@ -29,6 +31,13 @@ class EightChipCPU
 		BYTE	m_Registers[16];			// 16 registers, 8-bits (BYTE) each.
 											// called V0 to VF. VF doubles as the carry flag.		
 		
+		BYTE	m_DelayTimer;				// Delay Timer active whenever register DT is non-zero.
+											// This timer substracts 1 from DT at rate of 60Hz until 0 then desactivates.
+
+		BYTE	m_SoundTimer;				// Sound Timer active whenever register ST is non-zero.
+		BYTE	m_KeyState[16];				// This timer substracts 1 from ST at rate of 60Hz.
+											// Chip-8 will buzz as long as ST is greater than 0.
+	
 		WORD	m_AddressI;					// 16-bits address register used to access memory
 		WORD	m_ProgramCounter;			// 16-bits program counter
 		
@@ -42,18 +51,30 @@ class EightChipCPU
 
 		// Singleton
 		static	EightChipCPU* GetInstance(void);
-		static	EightChipCPU* m_Instance;
+
+		bool	LoadRom(const std::string& rom_filename);
+		void	ExecuteNextOpCode(void);
+
+		// Delay/Sound Timers decrements
+		void	DecreaseTimers(void);
+
+		// KeyStates
+		void	KeyPressed(int key);
+		void	KeyReleased(int key);
 
 		// Screen
 		BYTE	m_ScreenPixels[640][320][3];
 
+	private:
+		// Initialise CPU or Screen
 		void	CPUReset(void);
+		void	ClearScreen(void);
 
-		bool	LoadRom(const std::string& rom_filename);
+		// Play a sound. Only one tone is played, frequency is predefined.
+		void	PlayBeep(void);
 
 		// OpCodes reading and execution
 		WORD	GetNextOpCode(void);
-		void	ExecuteNextOpCode(void);
 
 		// Clear screen and draw graphics. (DecodeOpCode0)
 		void	Opcode00E0(void);
