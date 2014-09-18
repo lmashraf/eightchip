@@ -22,10 +22,6 @@ EightChipCPU::~EightChipCPU(void)
 {}
 
 //------------------------------------------------------
-void EightChipCPU::ClearScreen(void)
-{}
-
-//------------------------------------------------------
 bool EightChipCPU::LoadRom(const std::string& rom_filename)
 {
 	// NIY:
@@ -33,19 +29,37 @@ bool EightChipCPU::LoadRom(const std::string& rom_filename)
 }
 
 //------------------------------------------------------
+// Decreases the timers.
 void EightChipCPU::DecreaseTimers(void)
-{}
+{
+	if(m_DelayTimer > 0)
+		m_DelayTimer--;
+
+	if(m_SoundTimer > 0)
+	{
+		PlayBeep();
+		m_SoundTimer--;
+	}
+}
 
 //------------------------------------------------------
+/**
+ * Both methods below are self-explanatory.
+ */
 void EightChipCPU::KeyPressed(int key)
-{}
-//------------------------------------------------------
+{
+	m_KeyState[key] = 1 ;
+}
 void EightChipCPU::KeyReleased(int key)
-{}
+{
+	m_KeyState[key] = 0 ;
+}
 
 //-----------------------------------------------------
 void EightChipCPU::PlayBeep(void)
-{}
+{
+	// NIY
+}
 
 //------------------------------------------------------
 /**
@@ -69,6 +83,27 @@ void EightChipCPU::CPUReset(void)
 	// Initialise timers
 	m_DelayTimer = 0;
 	m_SoundTimer = 0;
+}
+//------------------------------------------------------
+/**
+ * The Chip8 has a HEX based keypad (0x0 to 0xF)
+ * This method helps retrieve the current state of the key.
+ */
+int EightChipCPU::GetKeyPressed(void)
+{
+	// initialise key value 
+	int key = -1;
+
+	//  skim through the keypad
+	for(int i = 0; i < 10; i++)
+	{
+		// checks if key is pressed, if true, return its value.
+		if(m_KeyState[i] > 0)
+			return i;
+	}
+
+	// -1 is returned if no key is pressed.
+	return key;
 }
 
 //------------------------------------------------------
@@ -109,7 +144,7 @@ WORD EightChipCPU::GetNextOpCode(void)
 /*
  * Operation Codes are portion of instruction which indicates
  * the operation to be performed.
- * The Chip-8 has 35 Opcode which are all 16-bits long:
+ * The Chip-8 has 35 OpCode which are all 16-bits long:
  *		- KKK	: address 
  *		- KK	: 8-bit constant
  *		- K	: 4-bit constant
@@ -118,15 +153,22 @@ WORD EightChipCPU::GetNextOpCode(void)
 
 // CLS
 // Clear the display
-void EightChipCPU::Opcode00E0(void)
+void EightChipCPU::OpCode00E0(void)
 {
-	// TBD: this should fill m_ScreenPixels with value 255 .
-	// see. std::fill of <algorithm>
+	for (int x = 0; x < 640; x++)
+	{
+		for (int y = 0 ; y < 320; y++)
+		{
+			m_ScreenPixels[x][y][0] = 0xFF ;
+			m_ScreenPixels[x][y][1] = 0xFF ;
+			m_ScreenPixels[x][y][2] = 0xFF ;
+		}
+	}
 }
 
 // RET
 // Return from a subroutine
-void EightChipCPU::Opcode00EE()
+void EightChipCPU::OpCode00EE()
 {
 	// The interpreter sets the program counter to the address 
 	// at the top of the stack. An element is substracted implicitly from stack.
@@ -134,182 +176,371 @@ void EightChipCPU::Opcode00EE()
 	m_Stack.pop_back();
 }
 //------------------------------------------------------
-void EightChipCPU::OpcodeDXYK(WORD opcode)
-{}
+// DRW Vx, Vy, nibble
+// Display n-byte sprite starting at memory location I 
+// at (Vx, Vy), set VF = collision
+void EightChipCPU::OpCodeDXYN(WORD opcode)
+{
+	// The interpreter reads n bytes from memory starting
+	// the address stored in I.
+
+	// These bytes are then displayed as sprites on screen
+	// at coordinates (Vx, Vy).
+
+	// Sprites are XOR'd onto existing screen,
+	// (see. 8XY3 for XOR)
+
+	// If this causes any pixels to be erased, VF is set to 1
+	// Otherwise it is set to 0.
+
+	// If the sprite is positioned so part of it is outside the
+	// coordinates of the display, it wraps around  to opposite
+	// direction of the screen.
+
+	
+}
 
 //------------------------------------------------------
-void EightChipCPU::OpcodeEX9E(WORD opcode)
-{}
+// SKP Vx
+// Skip next instruction if key with the value of Vx is pressed.
+void EightChipCPU::OpCodeEX9E(WORD opcode)
+{
+	// Masks off Vx register
+	int Vx = opcode & 0x0F00;
+	Vx >>= 8;
+
+	// Checks the keyboard, 
+	int keypressed = m_Registers[Vx];
+	
+	// and if the key corresponding to the value of Vx 
+	// is currently down, PC is increased by 2
+	if(m_KeyState[keypressed] == 1)
+		m_ProgramCounter += 2;
+}
+//-----------------------------------------------------
+// SKNP Vx
+// Skip next instruction if key with the value of Vx is pressed.
+void EightChipCPU::OpCodeEXA1(WORD opcode)
+{
+	// Masks off Vx register
+	int Vx = opcode & 0x0F00;
+	Vx >>= 8;
+
+	// Checks the keyboard, 
+	int keypressed = m_Registers[Vx];
+
+	// and if the key corresponding to the value of Vx
+	// is currently in the up position, PC is incremented by 2
+	if(m_KeyState[keypressed] == 0)
+		m_ProgramCounter += 2;
+}	
+
 //------------------------------------------------------
-void EightChipCPU::OpcodeEXA1(WORD opcode)
-{}
-		
+// LD Vx, Vy
+// Set Vx = Vy
+void EightChipCPU::OpCode8XY0(WORD opcode)
+{
+	// Masks off the Vx and Vy registers
+	int Vx = opcode & 0x0F00;
+	int Vy = opcode & 0x00F0;
+	Vx >>= 8;
+	Vy >>= 4;
+
+	// Stores the value of register Vy in register Vx
+	m_Registers[Vx] = m_Registers[Vy];
+}
 //------------------------------------------------------
-void EightChipCPU::Opcode8XY0(WORD opcode)
-{}
+// OR Vx, Vy
+// Set Vx = Vx OR Vy
+void EightChipCPU::OpCode8XY1(WORD opcode)
+{
+	// Masks off the Vx and Vy registers
+	int Vx = opcode & 0x0F00;
+	int Vy = opcode & 0x00F0;
+	Vx >>= 8;
+	Vy >>= 4;
+
+	// Performs a bitwise OR on the values of Vx and Vy,
+	// then stores the result in Vx.
+	m_Registers[Vx] = m_Registers[Vx] | m_Registers[Vy];
+}
+//-----------------------------------------------------
+// AND Vx, Vy
+// Set Vx = Vx AND Vy
+void EightChipCPU::OpCode8XY2(WORD opcode)
+{
+	// Masks off the Vx and Vy registers
+	int Vx = opcode & 0x0F00;
+	int Vy = opcode & 0x00F0;
+	Vx >>= 8;
+	Vy >>= 4;
+
+	// Performs a bitwise AND on the values of Vx and Vy,
+	// then stores the result in Vx.
+	m_Registers[Vx] = m_Registers[Vy] & m_Registers[Vy];
+}
 //------------------------------------------------------
-void EightChipCPU::Opcode8XY1(WORD opcode)
-{}
+// XOR Vx, Vy
+// Set Vx = Vx XOR Vy
+void EightChipCPU::OpCode8XY3(WORD opcode)
+{
+	// Masks off the Vx and Vy registers
+	int Vx = opcode & 0x0F00;
+	int Vy = opcode & 0x00F0;
+	Vx >>= 8;
+	Vy >>= 4;
+
+	// Performs a bitwise XOR on the values of Vx and Vy,
+	// then stores the result in Vx.
+	m_Registers[Vx] = m_Registers[Vy] ^ m_Registers[Vy];
+}
 //------------------------------------------------------
-void EightChipCPU::Opcode8XY2(WORD opcode)
-{}
+// ADD Vx, Vy
+// Set Vx = Vx + Vy, set VF = carry
+void EightChipCPU::OpCode8XY4(WORD opcode)
+{
+	// VF is set to 0, see below.
+	m_Registers[0xF] = 0;
+
+	// Masks off the Vx and Vy registers
+	int Vx = opcode & 0x0F00;
+	int Vy = opcode & 0x00F0;
+	Vx >>= 8;
+	Vy >>= 4;
+
+	int value = m_Registers[Vx] + m_Registers[Vy];
+
+	// The values of Vx and Vy are added together.
+	// If the result is greater than 8 bits (0xFF = 255)
+	// VF is set to 1, otherwise it's set to 0
+	// Only the lowest (LSB) 8 bits of the result are kept.
+	if(value > 0xF)
+		m_Registers[0xF] = 1;
+
+	m_Registers[Vx] = m_Registers[Vy] + m_Registers[Vy];	
+}
 //------------------------------------------------------
-void EightChipCPU::Opcode8XY3(WORD opcode)
-{}
+// SUB Vx, Vy
+// Set Vx = Vx - Vy, set VF = NOT borrow
+void EightChipCPU::OpCode8XY5(WORD opcode)
+{
+	// VF is set to 0, see below.
+	m_Registers[0xF] = 0;
+
+	// Masks off the Vx and Vy registers
+	int Vx = opcode & 0x0F00;
+	int Vy = opcode & 0x00F0;
+	Vx >>= 8;
+	Vy >>= 4;
+
+	// If Vx > Vy, then VF is set to 1, otherwise 0.
+	if(m_Registers[Vx] > m_Registers[Vy])
+		m_Registers[0xF] = 1;
+	
+	// Then substract Vy from Vy, and store the result in Vx.
+	m_Registers[Vx] = m_Registers[Vx] - m_Registers[Vy];
+}
 //------------------------------------------------------
-void EightChipCPU::Opcode8XY4(WORD opcode)
-{}
+// SHR Vx {, Vy}
+// Set Vx = Vx SHR 1
+void EightChipCPU::OpCode8XY6(WORD opcode)
+{
+	// Masks off the Vx register
+	int Vx = opcode & 0x0F00;
+	Vx >>= 8;
+
+	// If the LSB of Vx is 1, the VF is set to 1
+	// Otherwise, it's set to 0.
+	m_Registers[0xF] = m_Registers[Vx] & 0x1;
+
+	// Vx is, then, divided by 2.
+	m_Registers[Vx] >>= 1;
+}
 //------------------------------------------------------
-void EightChipCPU::Opcode8XY5(WORD opcode)
-{}
+// SUBN Vx, Vy
+// Set Vx = Vy - Vx, set VF = NOT borrow.
+void EightChipCPU::OpCode8XY7(WORD opcode)
+{
+	// VF is set to 0, see below.
+	m_Registers[0xF] = 1;
+
+	// Masks off the Vx and Vy registers
+	int Vx = opcode & 0x0F00;
+	int Vy = opcode & 0x00F0;
+	Vx >>= 8;
+	Vy >>= 4;
+
+	// If Vy > Vx, then VF is set to 1, otherwise 0.
+	// Then Vx is substracted from Vy, and the results stored in Vx.
+	if(m_Registers[Vx] > m_Registers[Vy])
+		m_Registers[0xF] = 0;
+
+	m_Registers[Vx] = m_Registers[Vy] - m_Registers[Vx];
+}
 //------------------------------------------------------
-void EightChipCPU::Opcode8XY6(WORD opcode)
-{}
-//------------------------------------------------------
-void EightChipCPU::Opcode8XY7(WORD opcode)
-{}
-//------------------------------------------------------
-void EightChipCPU::Opcode8XYE(WORD opcode)
-{}
+// SHL Vx {, Vy}
+// Set Vx = Vx SHL Vy
+void EightChipCPU::OpCode8XYE(WORD opcode)
+{
+	// Masks off the Vx register
+	int Vx = opcode & 0x0F00;
+	Vx >>= 8;
+
+	// If the MSB of Vx is 1, then VF is set to 1, otherwise to 0.
+	m_Registers[0xF] = m_Registers[Vx] >> 7;
+
+	// Then Vx is multiplied by 2.
+	m_Registers[Vx] <<= 1;
+}
 
 //------------------------------------------------------
 // LD Vx, DT
 // Set Vx = delay timer value
-void EightChipCPU::OpcodeFX07(WORD opcode)
+void EightChipCPU::OpCodeFX07(WORD opcode)
 {
-	int regVx = opcode & 0x0F00;
-	regVx >>= 8;
+	int Vx = opcode & 0x0F00;
+	Vx >>= 8;
 
 	// The value of DT is placed into Vx
-	m_Registers[regVx] = m_DelayTimer;
+	m_Registers[Vx] = m_DelayTimer;
 }
 //------------------------------------------------------
 // LD Vx, K
 // Wait for a key press, store the value of the key in Vx
-void EightChipCPU::OpcodeFX0A(WORD opcode)
+void EightChipCPU::OpCodeFX0A(WORD opcode)
 {
 	// masks off Vx register
-	int regVx = opcode & 0x0F00;
-	regVx >>= 8;
+	int Vx = opcode & 0x0F00;
+	Vx >>= 8;
 
-	// All execution stops until a key is pressed,
-	// then the value of that key is stored in Vx.
+	// Retrieve the current keypad's state.
+	int keypressed = GetKeyPressed();
+
+	if(keypressed = -1)
+	{
+		// All execution stops until a key is pressed,
+		m_ProgramCounter -= 2;
+	}
+	else
+	{
+		// then the value of that key is stored in Vx.
+		m_Registers[Vx] = keypressed;
+	}
 }
 //------------------------------------------------------
 // LD DT, Vx
 // Set delay timer = Vx
-void EightChipCPU::OpcodeFX15(WORD opcode)
+void EightChipCPU::OpCodeFX15(WORD opcode)
 {
 	// masks off Vx register
-	int regVx = opcode & 0x0F00;
-	regVx >>= 8;
+	int Vx = opcode & 0x0F00;
+	Vx >>= 8;
 
 	// DT is set equal to the value of Vx
-	m_DelayTimer = m_Registers[regVx];
+	m_DelayTimer = m_Registers[Vx];
 }
 //------------------------------------------------------
 // LD ST, Vx
 // Set sound timer = Vx
-void EightChipCPU::OpcodeFX18(WORD opcode)
+void EightChipCPU::OpCodeFX18(WORD opcode)
 {
 	// masks off Vx register
-	int regVx = opcode & 0x0F00;
-	regVx >>= 8;
+	int Vx = opcode & 0x0F00;
+	Vx >>= 8;
 
 	// ST is set equal to the value of Vx
-	m_SoundTimer = m_Registers[regVx];
+	m_SoundTimer = m_Registers[Vx];
 }
 //------------------------------------------------------
 // ADD I, Vx
 // Set I = I + Vx
-void EightChipCPU::OpcodeFX1E(WORD opcode)
+void EightChipCPU::OpCodeFX1E(WORD opcode)
 {
 	// masks off Vx register
-	int regVx = opcode & 0x0F00;
-	regVx >>= 8;
+	int Vx = opcode & 0x0F00;
+	Vx >>= 8;
 
 	// The values of I and Vx are summed,
 	// The result is stored in I.
-	m_AddressI += m_Registers[regVx];
+	m_AddressI += m_Registers[Vx];
 }
 //------------------------------------------------------
 // LD F, Vx
 // Set I = location of sprite of digit Vx
-void EightChipCPU::OpcodeFX29(WORD opcode)
+void EightChipCPU::OpCodeFX29(WORD opcode)
 {
 	// masks off Vx register
-	int regVx = opcode & 0x0F00;
-	regVx >>= 8;
+	int Vx = opcode & 0x0F00;
+	Vx >>= 8;
 
 	// The value of I is set to the location for the hexadecimal sprite
 	// corresponding to the value in Vx.
 	// Characters 0-F (in hexadecimal) are represented by a 4x5 font.
-	m_AddressI = m_Registers[regVx] * 5;
-
+	m_AddressI = m_Registers[Vx] * 5;
 }
 //------------------------------------------------------
 // LD B, Vx
 // Store Binary-coded decimal representation of Vx in memory locations I, I+1 and I+2
-void EightChipCPU::OpcodeFX33(WORD opcode)
+void EightChipCPU::OpCodeFX33(WORD opcode)
 {
 	// masks off Vx register
-	int regVx = opcode & 0x0F00;
-	regVx >>= 8;
+	int Vx = opcode & 0x0F00;
+	Vx >>= 8;
 
 	// The interpreter takes the decimal value of Vx,
-	int Vx = m_Registers[regVx];
+	int value = m_Registers[Vx];
 
 	// and places the hundreds digit in memory at location in I,
-	int hundreds			= Vx / 100;
+	int hundreds			= value / 100;
 	m_GameMemory[m_AddressI]	= hundreds;
 	// and tens digits in I+1, 
-	int tens				= (Vx / 10) % 10;
+	int tens				= (value / 10) % 10;
 	m_GameMemory[m_AddressI+1]= tens;
 	//and the units digists in I+2.
-	int units	 = Vx % 10;	
+	int units	 = value % 10;	
 	m_GameMemory[m_AddressI+2]= units;
 }
 //------------------------------------------------------
 // LD [I], Vx
 // Stores registers V0 through Vx in memory starting at location I
-void EightChipCPU::OpcodeFX55(WORD opcode)
+void EightChipCPU::OpCodeFX55(WORD opcode)
 {
 	// masks off Vx register
-	int regVx = opcode & 0x0F00;
-	regVx >>= 8;
+	int Vx = opcode & 0x0F00;
+	Vx >>= 8;
 
 	// The interpreter copies the values of registers V0 through Vx
 	// into memory, starting at the address in I
-	for(int i = 0; i <= regVx; i++)
+	for(int i = 0; i <= Vx; i++)
 	{
 		m_GameMemory[m_AddressI + i] = m_Registers[i];
 	}
 
-	m_AddressI = m_AddressI + regVx + 1;
+	m_AddressI = m_AddressI + Vx + 1;
 }
 //------------------------------------------------------
 // LD Vx, [I]
 // Read registers V0 through Vx from memory starting at location I
-void EightChipCPU::OpcodeFX65(WORD opcode)
+void EightChipCPU::OpCodeFX65(WORD opcode)
 {
 	// masks off Vx register
-	int regVx = opcode & 0x0F00;
-	regVx >>= 8;
+	int Vx = opcode & 0x0F00;
+	Vx >>= 8;
 
 	// The interpreter reads values from memory starting at location I
 	// into registers V0 through Vx.
-	for (int i = 0 ; i <= regVx; i++)
+	for (int i = 0 ; i <= Vx; i++)
 	{
 		m_Registers[i] = m_GameMemory[m_AddressI+i]  ;
 	}
 
-	m_AddressI= m_AddressI + regVx + 1 ;
+	m_AddressI= m_AddressI + Vx + 1 ;
 }
 
 //------------------------------------------------------
 // JP addr
 // Jump to location KKK
-void EightChipCPU::Opcode1KKK(WORD opcode)
+void EightChipCPU::OpCode1KKK(WORD opcode)
 {
 	// The interpreter sets the program counter to kkk.
 	this->m_ProgramCounter = opcode & 0x0FFF;
@@ -317,7 +548,7 @@ void EightChipCPU::Opcode1KKK(WORD opcode)
 //------------------------------------------------------
 // CALL addr
 // Call subroutine at KKK
-void EightChipCPU::Opcode2KKK(WORD opcode)
+void EightChipCPU::OpCode2KKK(WORD opcode)
 {
 	// The interpreter increments the stack pointer (implicit using std::vector)
 	// then puts the current PC on top of the stack.
@@ -329,99 +560,99 @@ void EightChipCPU::Opcode2KKK(WORD opcode)
 //------------------------------------------------------
 // SE Vx, byte
 // Skip next instruction if Vx = kk
-void EightChipCPU::Opcode3XKK(WORD opcode)
+void EightChipCPU::OpCode3XKK(WORD opcode)
 {
 	// masks off kk value
 	int kk	 = opcode & 0x00FF;
 	// masks off register Vx, then shifts it across.
-	int regVx = opcode & 0x0F00;
-	regVx >>= 8;
+	int Vx = opcode & 0x0F00;
+	Vx >>= 8;
 
 	// The interpreter compares the register Vx to kk
-	// If they are equal, the PC is incremented by 2 bytes (to the next Opcode).
-	if(m_Registers[regVx] == kk)
+	// If they are equal, the PC is incremented by 2 bytes (to the next OpCode).
+	if(m_Registers[Vx] == kk)
 		m_ProgramCounter += 2;
 }
 //------------------------------------------------------
 // SNE Vx, byte
 // Skip next instruction if Vx != kk
-void EightChipCPU::Opcode4XKK(WORD opcode)
+void EightChipCPU::OpCode4XKK(WORD opcode)
 {
 	// masks off kk value
 	int kk    = opcode & 0x00FF;
 	// masks off register Vx, then shifts it across.
-	int regVx = opcode & 0x0F00;
-	regVx >>= 8;
+	int Vx = opcode & 0x0F00;
+	Vx >>= 8;
 
 	// The interpreter compares the register Vx to kk
 	// If they are not equal, the PC is incremented by 2 bytes.
-	if(m_Registers[regVx] != kk)
+	if(m_Registers[Vx] != kk)
 		m_ProgramCounter += 2;
 }
 //------------------------------------------------------
 // SE Vx, Vy
 // Skip next instruction if Vx = Vy
-void EightChipCPU::Opcode5XY0(WORD opcode)
+void EightChipCPU::OpCode5XY0(WORD opcode)
 {
 	// masks off registers Vx and Vy
-	int regVx = opcode & 0x0F00;
-	int regVy = opcode & 0x00F0;
+	int Vx = opcode & 0x0F00;
+	int Vy = opcode & 0x00F0;
 	// shifts Vx and Vy across adequately
-	regVx >>= 8;
-	regVy >>= 4;
+	Vx >>= 8;
+	Vy >>= 4;
 
 	// The interpreter compares registers Vx and Vy
 	// If they are equal, the PC is incremented by 2 bytes.
-	if(m_Registers[regVx] == m_Registers[regVy])
+	if(m_Registers[Vx] == m_Registers[Vy])
 		m_ProgramCounter += 2;
 }
 //------------------------------------------------------
 // LD Vx, byte
 // Set Vx = kk
-void EightChipCPU::Opcode6XKK(WORD opcode)
+void EightChipCPU::OpCode6XKK(WORD opcode)
 {
 	// masks off KK value and register Vx
 	int kk    = opcode & 0x00FF;
-	int regVx = opcode & 0x0F00;
+	int Vx = opcode & 0x0F00;
 	// shifts across register Vx
-	regVx >>= 8 ;
+	Vx >>= 8 ;
 
 	// The interpreter puts the value of kk into register Vx
-	m_Registers[regVx] = kk;
+	m_Registers[Vx] = kk;
 }
 //------------------------------------------------------
 // ADD Vx, byte
 // Set Vx = Vx + kk, the carry is not affected.
-void EightChipCPU::Opcode7XKK(WORD opcode)
+void EightChipCPU::OpCode7XKK(WORD opcode)
 {
 	// masks off kk and Vx values.
 	int kk	  = opcode && 0x00FF;
-	int regVx = opcode && 0x0F00;
-	regVx >>= 8 ;
+	int Vx = opcode && 0x0F00;
+	Vx >>= 8 ;
 	
 	// Adds the value of kk to the value of the register Vx,
 	// then stores the result in Vx.
-	m_Registers[regVx] += kk;
+	m_Registers[Vx] += kk;
 }
 //------------------------------------------------------
 // LD Vx, Vy
 // Set Vx = Vy
-void EightChipCPU::Opcode9XY0(WORD opcode)
+void EightChipCPU::OpCode9XY0(WORD opcode)
 {
 	// masks off registers Vx and Vy
-	int regVx = opcode & 0x0F00;
-	int regVy = opcode & 0x00F0;
+	int Vx = opcode & 0x0F00;
+	int Vy = opcode & 0x00F0;
 	// shifts Vx and Vy across adequately
-	regVx >>= 8;
-	regVy >>= 4;
+	Vx >>= 8;
+	Vy >>= 4;
 
 	// Stores the value of register Vy in register Vx.
-	m_Registers[regVx] = m_Registers[regVy];
+	m_Registers[Vx] = m_Registers[Vy];
 }
 //------------------------------------------------------
 // LD I, addr
 // Set I = nnn
-void EightChipCPU::OpcodeANNN(WORD opcode)
+void EightChipCPU::OpCodeANNN(WORD opcode)
 {
 	// masks off nnn
 	int nnn = opcode & 0x0FFF;
@@ -432,7 +663,7 @@ void EightChipCPU::OpcodeANNN(WORD opcode)
 //------------------------------------------------------
 // JP V0, addr
 // Jump to location nnn + V0
-void EightChipCPU::OpcodeBNNN(WORD opcode)
+void EightChipCPU::OpCodeBNNN(WORD opcode)
 {
 	// masks off nnn
 	int nnn = opcode & 0x0FFF;
@@ -444,37 +675,104 @@ void EightChipCPU::OpcodeBNNN(WORD opcode)
 //------------------------------------------------------
 // RND Vx, byte
 // Set Vx = random byte AND kk
-void EightChipCPU::OpcodeCXKK(WORD opcode)
+void EightChipCPU::OpCodeCXKK(WORD opcode)
 {
 	// masks off kk and the Vx register
 	int kk		= opcode & 0x00FF;
-	int regVx   = opcode & 0x0F00;
+	int Vx   = opcode & 0x0F00;
 	
-	regVx >>= 8,
+	Vx >>= 8,
 
 	// The interpreter generates a random number from 0 to 255
 	// which is then AND'd with the value of kk.
 	// The results are stored in Vx. (see. 8XY2 for more details on AND)
-	m_Registers[regVx] = (rand() % 256) & kk;
+	m_Registers[Vx] = (rand() % 256) & kk;
 }
 
 //------------------------------------------------------
 /**
- * Decode Operation Codes
- *
- *
+ * Decode OpCodes grouped in 0, 8, E and F.
  */
-void EightChipCPU::DecodeOpCode0(void)
-{}
+// Execute OpCodes of MSB matching the value 0
+void EightChipCPU::DecodeOpCode0(WORD opcode)
+{
+	switch(opcode & 0xF)
+	{
+		case 0x0: 
+			OpCode00E0(); break;  // CLS
+		case 0xE:
+			OpCode00EE();  break; // RET
+		default: break;
+	}
+}
 
-void EightChipCPU::DecodeOpCode8(void)
-{}
-
-void EightChipCPU::DecodeOpCodeE(void)
-{}
-
-void EightChipCPU::DecodeOpCodeF(void)
-{}
+// Execute OpCodes of MSB matching the value 8
+void EightChipCPU::DecodeOpCode8(WORD opcode)
+{
+	switch(opcode & 0xF)
+	{
+		case 0x0: 
+			OpCode8XY0(opcode); break; // OR  Vx, Vy
+		case 0x1:
+			OpCode8XY1(opcode); break; // AND Vx, Vy
+		case 0x2:
+			OpCode8XY3(opcode); break; // XOR Vx, Vy
+		case 0x3:
+			OpCode8XY3(opcode); break; // ADD Vx, Vy
+		case 0x4: 
+			OpCode8XY4(opcode); break; // SUB Vx,  Vy
+		case 0x5:
+			OpCode8XY5(opcode); break; // SHR Vx {, Vy}
+		case 0x6:
+			OpCode8XY6(opcode); break; // SUBN Vx, Vy
+		case 0x7: 
+			OpCode8XY7(opcode); break; // SHL Vx {, Vy}
+		case 0xE:
+			OpCode8XYE(opcode); break; // SNE Vx, Vy
+		default:
+			break;
+	}
+}
+// Execute OpCodes of MSB matching the value E
+void EightChipCPU::DecodeOpCodeE(WORD opcode)
+{
+	switch(opcode & 0xF)
+	{
+		case 0xE:
+			OpCodeEX9E(opcode); break;	// SKP Vx
+		case 0x1:
+			OpCodeEXA1(opcode); break;	// SKNP Vx
+		default:
+			break;
+	}
+}
+// Execute OpCodes of last two MSB matching the value F
+void EightChipCPU::DecodeOpCodeF(WORD opcode)
+{
+	switch(opcode & 0xFF)
+	{
+		case 0x07: 
+			OpCodeFX07(opcode); break ;	// LD Vx, DT
+		case 0x0A: 
+			OpCodeFX0A(opcode); break ;	// LD Vx, k
+		case 0x15: 
+			OpCodeFX15(opcode); break ;	// LD DT, Vx
+		case 0x18: 
+			OpCodeFX18(opcode); break ;	// LD ST, Vx
+		case 0x1E: 
+			OpCodeFX1E(opcode); break ;	// ADD I, Vx
+		case 0x29: 
+			OpCodeFX29(opcode); break ;	// LD F, Vx
+		case 0x33: 
+			OpCodeFX33(opcode); break ;	// LD B, Vx
+		case 0x55: 
+			OpCodeFX55(opcode); break ;	// LD [I], Vx
+		case 0x65: 
+			OpCodeFX65(opcode); break ;	//LD Vx, [I]
+		default: 
+			break;
+	}
+}
 
 //------------------------------------------------------
 /**
@@ -492,22 +790,38 @@ void EightChipCPU::ExecuteNextOpCode(void)
 	// Evaluate and execute.
 	switch(opcode & 0xF000)
 	{
-		case 0x0000: ; break;
-		case 0x1000: ; break;
-		case 0x2000: ; break;
-		case 0x3000: ; break;
-		case 0x4000: ; break;
-		case 0x5000: ; break;
-		case 0x6000: ; break;
-		case 0x7000: ; break;
-		case 0x8000: ; break;
-		case 0x9000: ; break;
-		case 0xA000: ; break;
-		case 0xB000: ; break;
-		case 0xC000: ; break;
-		case 0xD000: ; break;
-		case 0xE000: ; break;
-		case 0xF000: ; break;
+		case 0x0000: 
+			DecodeOpCode0(opcode); break;	// see. DecodeOpCode0 definition
+		case 0x1000: 
+			OpCode1KKK(opcode); break;		// JP addr
+		case 0x2000: 
+			OpCode2KKK(opcode); break;		// CALL addr
+		case 0x3000: 
+			OpCode3XKK(opcode); break;		// SE Vx, byte
+		case 0x4000: 
+			OpCode4XKK(opcode); break;		// SNE Vx, byte
+		case 0x5000: 
+			OpCode5XY0(opcode); break;		// SE Vx, Vy
+		case 0x6000: 
+			OpCode6XKK(opcode); break;		// LD Vx, byte
+		case 0x7000: 
+			OpCode7XKK(opcode); break;		// ADD Vx, byte
+		case 0x8000: 
+			DecodeOpCode8(opcode); break;	// see. DecodeOpCode8 definition
+		case 0x9000: 
+			OpCode9XY0(opcode); break;		// SNE Vx, Vy
+		case 0xA000: 
+			OpCodeANNN(opcode); break;		// LD I, addr
+		case 0xB000: 
+			OpCodeBNNN(opcode); break;		// JP V0, addr
+		case 0xC000: 
+			OpCodeCXKK(opcode); break;		// RND Vx, byte
+		case 0xD000: 
+			OpCodeDXYN(opcode); break;		// DRW Vx, Vy, nibble
+		case 0xE000: 
+			DecodeOpCodeE(opcode); break;	// see. DecodeOpCodeE definition
+		case 0xF000: 
+			DecodeOpCodeF(opcode); break;	// see. DecodeOpCodeF definition
 		default: break;
 	}
 }

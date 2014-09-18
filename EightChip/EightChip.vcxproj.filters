@@ -5,10 +5,13 @@
       <UniqueIdentifier>{93995380-89BD-4b04-88EB-625FBE52EBFB}</UniqueIdentifier>
       <Extensions>h;hpp;hxx;hm;inl;inc;xsd</Extensions>
     </Filter>
-    <Filter Include="EightChip_CPU">
+    <Filter Include="ecCPU">
       <UniqueIdentifier>{a203f070-e2d2-4f13-80e5-1f79d40e95fa}</UniqueIdentifier>
     </Filter>
-    <Filter Include="EightChip_GUI">
+    <Filter Include="ecRAM">
+      <UniqueIdentifier>{a718254e-c296-42ca-ac8a-841589961502}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="ecGPU">
       <UniqueIdentifier>{b4080ff4-80f6-40ee-afb5-ebf83717ece3}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
@@ -20,15 +23,15 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="EightChipCPU.h">
-      <Filter>EightChip_CPU</Filter>
+      <Filter>ecCPU</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="EightChipCPU.cpp">
-      <Filter>EightChip_CPU</Filter>
+      <Filter>ecCPU</Filter>
     </ClCompile>
     <ClCompile Include="main.cpp">
-      <Filter>EightChip_GUI</Filter>
+      <Filter>ecGPU</Filter>
     </ClCompile>
     <ClCompile Include="stdafx.cpp">
       <Filter>Header Files</Filter>
