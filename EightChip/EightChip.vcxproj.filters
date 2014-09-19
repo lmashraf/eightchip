@@ -8,9 +8,6 @@
     <Filter Include="ecCPU">
       <UniqueIdentifier>{a203f070-e2d2-4f13-80e5-1f79d40e95fa}</UniqueIdentifier>
     </Filter>
-    <Filter Include="ecRAM">
-      <UniqueIdentifier>{a718254e-c296-42ca-ac8a-841589961502}</UniqueIdentifier>
-    </Filter>
     <Filter Include="ecGPU">
       <UniqueIdentifier>{b4080ff4-80f6-40ee-afb5-ebf83717ece3}</UniqueIdentifier>
     </Filter>

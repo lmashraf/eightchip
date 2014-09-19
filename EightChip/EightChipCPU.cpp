@@ -24,8 +24,23 @@ EightChipCPU::~EightChipCPU(void)
 //------------------------------------------------------
 bool EightChipCPU::LoadRom(const std::string& rom_filename)
 {
-	// NIY:
-	return false;
+	// Reset CPU and CLS
+	CPUReset() ;
+	OpCode00E0() ;
+
+    // Load the game
+    FILE* rom ;
+    rom = fopen(rom_filename.c_str(), "rb") ;
+
+    // Check if the rom exists
+    if (0 == rom)
+        return false ;
+
+	// Reads the rom starting 0x200
+    fread(&m_GameMemory[0x200], ROMSIZE, 1, rom) ;
+    fclose(in) ;
+
+    return true ;
 }
 
 //------------------------------------------------------
@@ -58,7 +73,10 @@ void EightChipCPU::KeyReleased(int key)
 //-----------------------------------------------------
 void EightChipCPU::PlayBeep(void)
 {
-	// NIY
+	#ifdef _WIN32
+		Beep(440, 300);
+	#endif
+
 }
 
 //------------------------------------------------------
@@ -181,23 +199,54 @@ void EightChipCPU::OpCode00EE()
 // at (Vx, Vy), set VF = collision
 void EightChipCPU::OpCodeDXYN(WORD opcode)
 {
-	// The interpreter reads n bytes from memory starting
-	// the address stored in I.
+	// We will be scaling the window up 10 times.
+	// ie. 64x32px to 640x320px
+	const int scale = 10;
 
-	// These bytes are then displayed as sprites on screen
-	// at coordinates (Vx, Vy).
+	// Masks off the Vx and Vy registers
+	int Vx = opcode & 0x0F00 ;
+	int Vy = opcode & 0x00F0 ;
+	Vx >>= 8 ;
+	Vy >>= 4 ;
 
-	// Sprites are XOR'd onto existing screen,
-	// (see. 8XY3 for XOR)
+	// Calculate coordinates based on Vx, Vy
+	// while taking account of scaling
+	int spriteX = m_Registers[Vx] * scale;
+	int spriteY = m_Registers[Vy] * scale;
+	int spriteLines   = opcode & 0x000F;
 
-	// If this causes any pixels to be erased, VF is set to 1
-	// Otherwise it is set to 0.
+	// Pixels
+	BYTE pixel = 0x00;
 
-	// If the sprite is positioned so part of it is outside the
-	// coordinates of the display, it wraps around  to opposite
-	// direction of the screen.
+	// Set collisions to 0
+	m_Registers[0xf] = 0x00 ;
 
-	
+	for(int screenY; screenY < spriteLines; screenY++)
+	{
+		// The interpreter reads n bytes from memory starting
+		// the address stored in I.
+		pixel = m_GameMemory[m_Address + screenY];
+
+		for(screenX = 0; screenX < 8; screenX++)
+		{
+			// These bytes are then displayed as sprites on screen
+			// at coordinates (Vx, Vy).
+			if( (pixel & (0x80 >> screenX*scale)) != 0)
+			{
+				// If this causes any pixels to be erased, VF is set to 1
+				// Otherwise it is set to 0.
+				if(m_ScreenPixels[Vy + screenY*scale][Vx + screenX*scale] == 1)
+					m_Registers[0xF] = 1;
+
+				// If the sprite is positioned so part of it is outside the
+				// coordinates of the display, it wraps around  to opposite
+				// direction of the screen.
+				// Sprites are XOR'd onto existing screen,
+				// (see. 8XY3 for XOR)
+				m_ScreenPixels[Vx + screenX*scale][Vy + screenY*scale] ^= 1;
+			}
+		}
+	}
 }
 
 //------------------------------------------------------
