@@ -8,8 +8,11 @@
     <Filter Include="ecCPU">
       <UniqueIdentifier>{a203f070-e2d2-4f13-80e5-1f79d40e95fa}</UniqueIdentifier>
     </Filter>
-    <Filter Include="ecGPU">
-      <UniqueIdentifier>{b4080ff4-80f6-40ee-afb5-ebf83717ece3}</UniqueIdentifier>
+    <Filter Include="ecApp">
+      <UniqueIdentifier>{681fa8df-b939-4797-9ee2-053cb8e99d75}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="ecUtility">
+      <UniqueIdentifier>{594c2122-ee12-4598-852d-8c85d028d096}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>
@@ -19,19 +22,37 @@
     <ClInclude Include="targetver.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="EightChipCPU.h">
+    <ClInclude Include="ECApp.h">
+      <Filter>ecApp</Filter>
+    </ClInclude>
+    <ClInclude Include="ECCpu.h">
       <Filter>ecCPU</Filter>
+    </ClInclude>
+    <ClInclude Include="ECCpu_Defs.h">
+      <Filter>ecUtility</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="EightChipCPU.cpp">
-      <Filter>ecCPU</Filter>
-    </ClCompile>
-    <ClCompile Include="main.cpp">
-      <Filter>ecGPU</Filter>
-    </ClCompile>
     <ClCompile Include="stdafx.cpp">
       <Filter>Header Files</Filter>
+    </ClCompile>
+    <ClCompile Include="ECApp_OnInit.cpp">
+      <Filter>ecApp</Filter>
+    </ClCompile>
+    <ClCompile Include="ECApp_OnCleanup.cpp">
+      <Filter>ecApp</Filter>
+    </ClCompile>
+    <ClCompile Include="ECApp_OnLoop.cpp">
+      <Filter>ecApp</Filter>
+    </ClCompile>
+    <ClCompile Include="ECApp.cpp">
+      <Filter>ecApp</Filter>
+    </ClCompile>
+    <ClCompile Include="ECCpu.cpp">
+      <Filter>ecCPU</Filter>
+    </ClCompile>
+    <ClCompile Include="ECCpu_Utils.cpp">
+      <Filter>ecUtility</Filter>
     </ClCompile>
   </ItemGroup>
 </Project>
