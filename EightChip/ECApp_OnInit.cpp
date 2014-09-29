@@ -12,7 +12,7 @@ bool EightChipApp::OnInit(void)
 		return false;
 	}
 
-	if(!ecGfx::SetupGraphics())
+	if(!ecGfx::SetupSDL())
 	{
 		ecSys::LogMessage(ERR004);
 		delete this->cpu;

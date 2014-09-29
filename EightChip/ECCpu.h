@@ -34,7 +34,9 @@ class EightChipCPU;
 //-----------------------------------------------------
 namespace ecGfx
 {
-	bool SetupGraphics(void);
+	void SetupOpenGL(void);
+	bool SetupSDL(void);
+
 	void DrawGraphics(EightChipCPU* cpu);
 };
 

@@ -110,23 +110,8 @@ void ecGfx::DrawGraphics(EightChipCPU* cpu)
 	glFlush();
 }
 //-----------------------------------------------------
-bool ecGfx::SetupGraphics(void)
+void ecGfx::SetupOpenGL(void)
 {
-	if(SDL_Init(SDL_INIT_EVERYTHING) < 0)
-	{
-		ecSys::LogMessage(ERR005);
-		return false;
-	}
-	if(SDL_SetVideoMode(WINDOW_WIDTH, WINDOW_HEIGHT, 8, SDL_OPENGL) == NULL)
-	{
-		ecSys::LogMessage(ERR006);
-		return false;
-	}
-
-	/**
-	 * OpenGL
-	 */
-
 	glViewport(0, 0, WINDOW_WIDTH, WINDOW_HEIGHT);
 	glMatrixMode(GL_MODELVIEW);
 	glLoadIdentity();
@@ -140,8 +125,24 @@ bool ecGfx::SetupGraphics(void)
 	glDisable(GL_CULL_FACE);
 	glDisable(GL_DITHER);
 	glDisable(GL_BLEND);
+}
 
-	/*****/
+//-----------------------------------------------------
+bool ecGfx::SetupSDL(void)
+{
+	if(SDL_Init(SDL_INIT_EVERYTHING) < 0)
+	{
+		ecSys::LogMessage(ERR005);
+		return false;
+	}
+	if(SDL_SetVideoMode(WINDOW_WIDTH, WINDOW_HEIGHT, 8, SDL_OPENGL) == NULL)
+	{
+		ecSys::LogMessage(ERR006);
+		return false;
+	}
+
+	// OpenGL
+	SetupOpenGL();
 
 	SDL_WM_SetCaption(WINDOW_CAPTION, NULL);
 

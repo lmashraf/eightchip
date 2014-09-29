@@ -8,8 +8,9 @@
 EightChipApp::EightChipApp(void)
 {
 	statusRunning = true;
-	cpu = EightChipCPU::GetInstance();	// Chip8 CPU
-	ecEmulate::LoadSettings(settings);	// Initialize settings
+	
+	// Chip8 CPU
+	cpu = EightChipCPU::GetInstance();	
 }
 
 //--------------------------------------------------

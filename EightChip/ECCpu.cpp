@@ -60,8 +60,8 @@ void EightChipCPU::DecreaseTimers(void)
 
 	if(m_SoundTimer > 0)
 	{
-		PlayBeep();
 		m_SoundTimer--;
+		PlayBeep();
 	}
 }
 
@@ -69,11 +69,11 @@ void EightChipCPU::DecreaseTimers(void)
 /**
  * Both methods below are self-explanatory.
  */
-void EightChipCPU::KeyUp(int key)
+void EightChipCPU::KeyDown(int key)
 {
 	m_KeyState[key] = 1 ;
 }
-void EightChipCPU::KeyDown(int key)
+void EightChipCPU::KeyUp(int key)
 {
 	m_KeyState[key] = 0 ;
 }
@@ -159,7 +159,9 @@ WORD EightChipCPU::GetNextOpCode(void)
 
 	// Shift the first byte by 8 to the MSB, 
 	// and get the other byte on the LSB side.
-	res = (res << 8) | m_GameMemory[m_ProgramCounter + 1];;
+//	res = (res << 8) | m_GameMemory[m_ProgramCounter + 1];
+	res <<= 8;
+	res |= m_GameMemory[m_ProgramCounter + 1];
 
 	// Move 2 bytes ahead (OpCode size) to the next 'instruction'.
 	m_ProgramCounter += 2;
@@ -210,48 +212,50 @@ void EightChipCPU::OpCodeDXYN(WORD opcode)
 {
 	// We will be scaling the window up 10 times.
 	// ie. 64x32px to 640x320px
-	const int scale = 10;
+	const int SCALE = 10;
 
 	// Masks off the Vx and Vy registers
 	int Vx = opcode & 0x0F00 ;
+	Vx = Vx >> 8 ;
+
 	int Vy = opcode & 0x00F0 ;
-	Vx >>= 8 ;
-	Vy >>= 4 ;
+	Vy = Vy >> 4 ;
 
 	// Calculate coordinates based on Vx, Vy
 	// while taking account of scaling
-	int spriteX = m_Registers[Vx] * scale;
-	int spriteY = m_Registers[Vy] * scale;
-	int height  = (opcode & 0x000F);
+	int spriteX      = m_Registers[Vx] * SCALE;
+	int spriteY		 = m_Registers[Vy] * SCALE;
+	int spriteHeight = (opcode & 0x000F);
 
 	// Set collisions to 0
-	m_Registers[0xf] = 0x00;
+	m_Registers[0xF] = 0x00;
 
-	for(int screenY = 0; screenY < height; screenY++)
+	for(int y_line = 0; y_line < spriteHeight; y_line++)
 	{
 		// The interpreter reads n bytes from memory starting
 		// the address stored in I.
-		BYTE pixel = (m_GameMemory[m_AddressI + screenY]);
+		BYTE pixel = (m_GameMemory[m_AddressI + y_line]);
 
-		int screenX = 0, screenXinv = 7;
-
-		for(screenX = 0; screenX < 8; screenX++, screenXinv--)
+		int x_line = 0;
+		int x_line_inv = 7;
+		
+		for(x_line = 0; x_line < 8; x_line++, x_line_inv--)
 		{
 			// These bytes are then displayed as sprites on screen
 			// at coordinates (Vx, Vy).
-			int mask = 1 << screenXinv;
+			int mask = 1 << x_line_inv;
 			if( pixel & mask )
 			{
 				// initialize coordinates and colours
-				int x = Vx + (screenX * scale);
-				int y = Vy + (screenY * scale); 
-				int colour = 0;
+				int x = (x_line * SCALE) + spriteX;
+				int y = (y_line * SCALE) + spriteY; 
+				int colour = 0x00;	// black
 
 				// If this causes any pixels to be erased, VF is set to 1
 				// Otherwise it is set to 0.
 				if(m_ScreenPixels[y][x][0] == 0)
 				{
-					colour = 0xFF;
+					colour = 0xFF;	// white
 					m_Registers[0xF] = 1;
 				}
 
@@ -260,13 +264,13 @@ void EightChipCPU::OpCodeDXYN(WORD opcode)
 				// direction of the screen.
 				// Sprites are XOR'd onto existing screen,
 				// (see. 8XY3 for XOR)
-				for(int i = 0; i < scale; i++)
+				for(int i = 0; i < SCALE; i++)
 				{
-					for(int j = 0; j < scale; j++)
+					for(int j = 0; j < SCALE; j++)
 					{
-						m_ScreenPixels[y+i][x+j][0] = colour;
-						m_ScreenPixels[y+i][x+j][1] = colour;
-						m_ScreenPixels[y+i][x+j][2] = colour;
+						m_ScreenPixels[y+i][x+j][0] = colour;	// R
+						m_ScreenPixels[y+i][x+j][1] = colour;	// G
+						m_ScreenPixels[y+i][x+j][2] = colour;	// B
 					}
 				} 
 			}
@@ -366,7 +370,7 @@ void EightChipCPU::OpCode8XY3(WORD opcode)
 
 	// Performs a bitwise XOR on the values of Vx and Vy,
 	// then stores the result in Vx.
-	m_Registers[Vx] = m_Registers[Vy] ^ m_Registers[Vy];
+	m_Registers[Vx] = m_Registers[Vx] ^ m_Registers[Vy];
 }
 //------------------------------------------------------
 // ADD Vx, Vy
@@ -388,10 +392,10 @@ void EightChipCPU::OpCode8XY4(WORD opcode)
 	// If the result is greater than 8 bits (0xFF = 255)
 	// VF is set to 1, otherwise it's set to 0
 	// Only the lowest (LSB) 8 bits of the result are kept.
-	if(value > 0xF)
+	if(value > 0xFF)
 		m_Registers[0xF] = 1;
 
-	m_Registers[Vx] = m_Registers[Vy] + m_Registers[Vy];	
+	m_Registers[Vx] = m_Registers[Vx] + m_Registers[Vy];	
 }
 //------------------------------------------------------
 // SUB Vx, Vy
@@ -399,7 +403,7 @@ void EightChipCPU::OpCode8XY4(WORD opcode)
 void EightChipCPU::OpCode8XY5(WORD opcode)
 {
 	// VF is set to 0, see below.
-	m_Registers[0xF] = 0;
+	m_Registers[0xF] = 1;
 
 	// Masks off the Vx and Vy registers
 	int Vx = opcode & 0x0F00;
@@ -408,8 +412,8 @@ void EightChipCPU::OpCode8XY5(WORD opcode)
 	Vy >>= 4;
 
 	// If Vx > Vy, then VF is set to 1, otherwise 0.
-	if(m_Registers[Vx] > m_Registers[Vy])
-		m_Registers[0xF] = 1;
+	if(m_Registers[Vx] < m_Registers[Vy])
+		m_Registers[0xF] = 0;
 	
 	// Then substract Vy from Vy, and store the result in Vx.
 	m_Registers[Vx] = m_Registers[Vx] - m_Registers[Vy];
@@ -565,14 +569,15 @@ void EightChipCPU::OpCodeFX33(WORD opcode)
 	int value = m_Registers[Vx];
 
 	// and places the hundreds digit in memory at location in I,
-	int hundreds			= value / 100;
-	m_GameMemory[m_AddressI]	= hundreds;
+	int hundreds = value / 100;
 	// and tens digits in I+1, 
-	int tens				= (value / 10) % 10;
-	m_GameMemory[m_AddressI+1]= tens;
+	int tens	 = (value / 10) % 10;
 	//and the units digists in I+2.
 	int units	 = value % 10;	
-	m_GameMemory[m_AddressI+2]= units;
+
+	m_GameMemory[m_AddressI]   = hundreds;
+	m_GameMemory[m_AddressI+1] = tens;
+	m_GameMemory[m_AddressI+2] = units;
 }
 //------------------------------------------------------
 // LD [I], Vx
@@ -686,7 +691,7 @@ void EightChipCPU::OpCode5XY0(WORD opcode)
 void EightChipCPU::OpCode6XKK(WORD opcode)
 {
 	// masks off KK value and register Vx
-	int kk    = opcode & 0x00FF;
+	int kk = opcode & 0x00FF;
 	int Vx = opcode & 0x0F00;
 	// shifts across register Vx
 	Vx >>= 8 ;
@@ -700,8 +705,8 @@ void EightChipCPU::OpCode6XKK(WORD opcode)
 void EightChipCPU::OpCode7XKK(WORD opcode)
 {
 	// masks off kk and Vx values.
-	int kk	  = opcode && 0x00FF;
-	int Vx = opcode && 0x0F00;
+	int kk = opcode & 0x00FF;
+	int Vx = opcode & 0x0F00;
 	Vx >>= 8 ;
 	
 	// Adds the value of kk to the value of the register Vx,
@@ -710,7 +715,7 @@ void EightChipCPU::OpCode7XKK(WORD opcode)
 }
 //------------------------------------------------------
 // LD Vx, Vy
-// Set Vx = Vy
+// Skip the next instruction if Vx != Vy
 void EightChipCPU::OpCode9XY0(WORD opcode)
 {
 	// masks off registers Vx and Vy
@@ -720,8 +725,9 @@ void EightChipCPU::OpCode9XY0(WORD opcode)
 	Vx >>= 8;
 	Vy >>= 4;
 
-	// Stores the value of register Vy in register Vx.
-	m_Registers[Vx] = m_Registers[Vy];
+	// Increment program counter if Vx != Vy
+	if(m_Registers[Vx] != m_Registers[Vy])
+		m_ProgramCounter += 2;
 }
 //------------------------------------------------------
 // LD I, addr
@@ -752,15 +758,15 @@ void EightChipCPU::OpCodeBNNN(WORD opcode)
 void EightChipCPU::OpCodeCXKK(WORD opcode)
 {
 	// masks off kk and the Vx register
-	int kk		= opcode & 0x00FF;
-	int Vx   = opcode & 0x0F00;
-	
-	Vx >>= 8,
+	int kk = opcode & 0x00FF;
+	int Vx = opcode & 0x0F00;
+	Vx >>= 8;
 
 	// The interpreter generates a random number from 0 to 255
 	// which is then AND'd with the value of kk.
 	// The results are stored in Vx. (see. 8XY2 for more details on AND)
-	m_Registers[Vx] = (rand() % 256) & kk;
+//	m_Registers[Vx] = (rand() % 256) & kk;
+	m_Registers[Vx] = rand() & kk;
 }
 
 //------------------------------------------------------
@@ -790,7 +796,7 @@ void EightChipCPU::DecodeOpCode8(WORD opcode)
 		case 0x1:
 			OpCode8XY1(opcode); break; // AND Vx, Vy
 		case 0x2:
-			OpCode8XY3(opcode); break; // XOR Vx, Vy
+			OpCode8XY2(opcode); break; // XOR Vx, Vy
 		case 0x3:
 			OpCode8XY3(opcode); break; // ADD Vx, Vy
 		case 0x4: 
