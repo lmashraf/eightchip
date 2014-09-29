@@ -20,13 +20,13 @@ typedef std::map<std::string, std::string> SETTINGS_MAP;
 
 //----------------------------------
 // Rom name shouldn't be hardcoded...
-static const std::string ROM_NAME = "Tetris";
+static const std::string ROM_NAME = "RomFile";
 
 //----------------------------------
 // Window properties
 static const char* WINDOW_CAPTION	= "EightChip Emulator";
-static const int   WINDOW_HEIGHT	= 320;
-static const int   WINDOW_WIDTH		= 640;
+static const int   WINDOW_HEIGHT	= 640;
+static const int   WINDOW_WIDTH		= 1280;
 //----------------------------------
 // ERRORS
 // Error codes are faster in runtime than try/catch clauses...

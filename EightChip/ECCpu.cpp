@@ -184,9 +184,9 @@ WORD EightChipCPU::GetNextOpCode(void)
 // Clear the display
 void EightChipCPU::OpCode00E0(void)
 {
-	for (int x = 0; x < 640; x++)
+	for (int x = 0; x < WINDOW_WIDTH; x++)
 	{
-		for (int y = 0 ; y < 320; y++)
+		for (int y = 0 ; y < WINDOW_HEIGHT; y++)
 		{
 			m_ScreenPixels[y][x][0] = 0xFF ; // R
 			m_ScreenPixels[y][x][1] = 0xFF ; // G
@@ -211,8 +211,8 @@ void EightChipCPU::OpCode00EE()
 void EightChipCPU::OpCodeDXYN(WORD opcode)
 {
 	// We will be scaling the window up 10 times.
-	// ie. 64x32px to 640x320px
-	const int SCALE = 10;
+	// ie. 64x32px to 1280x640px
+	const int SCALE = 20;
 
 	// Masks off the Vx and Vy registers
 	int Vx = opcode & 0x0F00 ;

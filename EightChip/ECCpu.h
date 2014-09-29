@@ -104,7 +104,7 @@ class EightChipCPU
 		void	KeyUp(int key);
 
 		// Screen (Height x Width x RGB).. OpenGL takes Width then Height.. Figures!
-		BYTE	m_ScreenPixels[320][640][3];
+		BYTE	m_ScreenPixels[WINDOW_HEIGHT][WINDOW_WIDTH][3];
 
 	private:
 		// Initialise CPU or Screen
