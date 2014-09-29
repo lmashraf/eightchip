@@ -8,10 +8,10 @@ azer, qsdf, wxcv, uiop
 
 To run a ROM, edit "settings.ini" with the following format:<br>
 
-RomName:ROMS\ROMFILE!<br>
+RomFile:ROMS\ROMFILE!<br>
 OpcodesPerSecondes:NNNN!<br>
 
-where RomName should be given to the global variable ROM_NAME in "ECCPU_Defs.h" for execution.
+where RomFile should take the path to the ROM to be executed. The second argument is the number of instructions you'd wish to execute per second. It has a nice effect to it the lower it goes.
 
 
 A lot of tweaking to make this easier will be done shortly. 
