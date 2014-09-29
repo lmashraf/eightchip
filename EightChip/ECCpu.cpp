@@ -18,9 +18,7 @@ EightChipCPU* EightChipCPU::GetInstance(void)
 
 //------------------------------------------------------
 EightChipCPU::EightChipCPU(void)
-{
-	CPUReset();
-}
+{}
 
 //------------------------------------------------------
 EightChipCPU::~EightChipCPU(void)
@@ -188,9 +186,9 @@ void EightChipCPU::OpCode00E0(void)
 	{
 		for (int y = 0 ; y < 320; y++)
 		{
-			m_ScreenPixels[y][x][0] = 0xFF ;
-			m_ScreenPixels[y][x][1] = 0xFF ;
-			m_ScreenPixels[y][x][2] = 0xFF ;
+			m_ScreenPixels[y][x][0] = 0xFF ; // R
+			m_ScreenPixels[y][x][1] = 0xFF ; // G
+			m_ScreenPixels[y][x][2] = 0xFF ; // B
 		}
 	}
 }
@@ -224,34 +222,38 @@ void EightChipCPU::OpCodeDXYN(WORD opcode)
 	// while taking account of scaling
 	int spriteX = m_Registers[Vx] * scale;
 	int spriteY = m_Registers[Vy] * scale;
-	int spriteLines   = opcode & 0x000F;
-
-	// Pixels
-	BYTE pixel = 0x00;
+	int height  = (opcode & 0x000F);
 
 	// Set collisions to 0
-	m_Registers[0xf] = 0x00 ;
+	m_Registers[0xf] = 0x00;
 
-	for(int screenY = 0; screenY < spriteLines; screenY++)
+	for(int screenY = 0; screenY < height; screenY++)
 	{
 		// The interpreter reads n bytes from memory starting
 		// the address stored in I.
-		pixel = m_GameMemory[m_AddressI + screenY];
+		BYTE pixel = (m_GameMemory[m_AddressI + screenY]);
 
-		for(int screenX = 0; screenX < 8; screenX++)
+		int screenX = 0, screenXinv = 7;
+
+		for(screenX = 0; screenX < 8; screenX++, screenXinv--)
 		{
-			// array
-			int x = Vx + screenX * scale;
-			int y = Vy + screenY * scale;
-
 			// These bytes are then displayed as sprites on screen
 			// at coordinates (Vx, Vy).
-			if( (pixel & (0x80 >> screenX*scale)) != 0)
+			int mask = 1 << screenXinv;
+			if( pixel & mask )
 			{
+				// initialize coordinates and colours
+				int x = Vx + (screenX * scale);
+				int y = Vy + (screenY * scale); 
+				int colour = 0;
+
 				// If this causes any pixels to be erased, VF is set to 1
 				// Otherwise it is set to 0.
-				if(m_ScreenPixels[y][x][0] == 1)
+				if(m_ScreenPixels[y][x][0] == 0)
+				{
+					colour = 0xFF;
 					m_Registers[0xF] = 1;
+				}
 
 				// If the sprite is positioned so part of it is outside the
 				// coordinates of the display, it wraps around  to opposite
@@ -262,9 +264,9 @@ void EightChipCPU::OpCodeDXYN(WORD opcode)
 				{
 					for(int j = 0; j < scale; j++)
 					{
-						m_ScreenPixels[y+j][x+i][0] ^= 1;
-						m_ScreenPixels[y+j][x+i][1] ^= 1;
-						m_ScreenPixels[y+j][x+i][2] ^= 1;
+						m_ScreenPixels[y+i][x+j][0] = colour;
+						m_ScreenPixels[y+i][x+j][1] = colour;
+						m_ScreenPixels[y+i][x+j][2] = colour;
 					}
 				} 
 			}

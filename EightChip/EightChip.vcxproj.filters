@@ -55,4 +55,7 @@
       <Filter>ecUtility</Filter>
     </ClCompile>
   </ItemGroup>
+  <ItemGroup>
+    <None Include="settings.ini" />
+  </ItemGroup>
 </Project>

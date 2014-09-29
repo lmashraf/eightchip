@@ -160,7 +160,7 @@ class EightChipCPU
 		void	OpCodeANNN(WORD opcode);
 		void	OpCodeBNNN(WORD opcode);
 		void	OpCodeCXKK(WORD opcode);
-		void	OpCode00EE();
+		void	OpCode00EE(void);
 		
 		// Decode OpCodes
 		void	DecodeOpCode0(WORD opcode);

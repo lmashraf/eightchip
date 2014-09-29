@@ -8,6 +8,7 @@
 void ecSys::LogMessage(std::string message)
 {
 	// Either use a popup window or redirect the message to cerr output.
+	
 	#ifdef _WINDOWS
 		MessageBox(NULL, message.c_str(), "EightChip: ERROR OCCURED", MB_OK | MB_ICONERROR );
 	#else
@@ -99,8 +100,8 @@ void ecGfx::DrawGraphics(EightChipCPU* cpu)
 {
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 	glLoadIdentity();
-	glRasterPos2i(-1, +1);
-	glPixelZoom(+1, -1);
+	glRasterPos2i(-1, 1);
+	glPixelZoom(1, -1);
 
 	glDrawPixels(WINDOW_WIDTH, WINDOW_HEIGHT, GL_RGB, GL_UNSIGNED_BYTE, cpu->m_ScreenPixels);
 
@@ -109,14 +110,14 @@ void ecGfx::DrawGraphics(EightChipCPU* cpu)
 	glFlush();
 }
 //-----------------------------------------------------
-bool ecGfx::SetupGraphics()
+bool ecGfx::SetupGraphics(void)
 {
 	if(SDL_Init(SDL_INIT_EVERYTHING) < 0)
 	{
 		ecSys::LogMessage(ERR005);
 		return false;
 	}
-	if(SDL_SetVideoMode(WINDOW_WIDTH, WINDOW_HEIGHT, 8, SDL_OPENGL) < 0)
+	if(SDL_SetVideoMode(WINDOW_WIDTH, WINDOW_HEIGHT, 8, SDL_OPENGL) == NULL)
 	{
 		ecSys::LogMessage(ERR006);
 		return false;
@@ -129,12 +130,16 @@ bool ecGfx::SetupGraphics()
 	glViewport(0, 0, WINDOW_WIDTH, WINDOW_HEIGHT);
 	glMatrixMode(GL_MODELVIEW);
 	glLoadIdentity();
-	glOrtho(0, WINDOW_WIDTH, WINDOW_HEIGHT, 0, -1.0, +1.0);
-	glClearColor(0, 0, 0, +1.0);
+	glOrtho(0, WINDOW_WIDTH, WINDOW_HEIGHT, 0, -1.0, 1.0);
+	glClearColor(0, 0, 0, 1.0);
+	glClear(GL_COLOR_BUFFER_BIT|GL_DEPTH_BUFFER_BIT);
 	glShadeModel(GL_FLAT);
 
 	glEnable(GL_TEXTURE_2D);
-	glDisable(GL_DEPTH_TEST | GL_CULL_FACE | GL_DITHER | GL_BLEND);
+	glDisable(GL_DEPTH_TEST);
+	glDisable(GL_CULL_FACE);
+	glDisable(GL_DITHER);
+	glDisable(GL_BLEND);
 
 	/*****/
 
@@ -240,10 +245,11 @@ void ecEmulate::EmulateCycle(EightChipCPU* cpu, const SETTINGS_MAP& settings, bo
 			ecEmulate::SetupInput(cpu, event);
 
 			if(event.type == SDL_QUIT)
+			{
 				status = false;
+			}
 		}
 	
-
 		unsigned int currentTime = SDL_GetTicks();
 
 		if((time + interval) < currentTime)

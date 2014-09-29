@@ -20,13 +20,13 @@ typedef std::map<std::string, std::string> SETTINGS_MAP;
 
 //----------------------------------
 // Rom name shouldn't be hardcoded...
-static const std::string ROM_NAME = "TicTacToe";
+static const std::string ROM_NAME = "Tetris";
 
 //----------------------------------
 // Window properties
 static const char* WINDOW_CAPTION	= "EightChip Emulator";
-static const int   WINDOW_HEIGHT	= 640;
-static const int   WINDOW_WIDTH		= 320;
+static const int   WINDOW_HEIGHT	= 320;
+static const int   WINDOW_WIDTH		= 640;
 //----------------------------------
 // ERRORS
 // Error codes are faster in runtime than try/catch clauses...
@@ -38,7 +38,7 @@ static const int   WINDOW_WIDTH		= 320;
 #define ERR005 "Error initializing SDL!"
 #define ERR006 "Error setting SDL's view mode!"
 #define ERR007 "Error opening settings file game.ini !"
-#define ERR008 "game.ini appears to be malformed!"
+#define ERR008 "settings.ini appears to be malformed!"
 #define ERR009 "No settings could be found in game.ini"
 
 #endif
