@@ -2,38 +2,33 @@
 
 #include "ECApp.h"
 
-//-------------------------------------------------------------------------------------------------
-
-bool
-EightChipApp::OnInit( )
+bool EightChipApp::OnInit(void)
 {
-    if ( !ecemulate::LoadSettings( this->settings ) )
-    {
-        ecsyst::LogMessage( ERR009 );
-        delete this->eightchip_cpu;
+	if(!ecEmulate::LoadSettings(this->settings))
+	{
+		ecSys::LogMessage(ERR009);
+		delete this->cpu;
 
-        return false;
-    }
+		return false;
+	}
 
-    if ( !ecgfx::SetupSDL( ) )
-    {
-        ecsyst::LogMessage( ERR004 );
-        delete this->eightchip_cpu;
+	if(!ecGfx::SetupSDL())
+	{
+		ecSys::LogMessage(ERR004);
+		delete this->cpu;
 
-        return false;
-    }
+		return false;
+	}
 
-    if ( !ecemulate::LoadRom( this->eightchip_cpu, this->settings ) )
-    {
-        ecsyst::LogMessage( ERR003 );
-        SDL_Quit( );
+	if(!ecEmulate::LoadRom(this->cpu, this->settings))
+	{
+		ecSys::LogMessage(ERR003);
+		SDL_Quit();
 
-        delete this->eightchip_cpu;
+		delete this->cpu;
 
-        return false;
-    }
+		return false;
+	}
 
-    return true;
+	return true;
 }
-
-//-------------------------------------------------------------------------------------------------

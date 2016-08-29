@@ -2,13 +2,8 @@
 
 #include "ECApp.h"
 
-//-------------------------------------------------------------------------------------------------
-
-void
-EightChipApp::OnCleanup( )
+void EightChipApp::OnCleanup(void)
 {
-    delete this->eightchip_cpu;
-    SDL_Quit( );
+	delete this->cpu;
+	SDL_Quit();
 }
-
-//-------------------------------------------------------------------------------------------------

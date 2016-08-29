@@ -5,42 +5,38 @@
 
 #include "ECApp.h"
 
-//-------------------------------------------------------------------------------------------------
-
-EightChipApp::EightChipApp( )
+EightChipApp::EightChipApp(void)
 {
-    statusRunning = true;
-
-    eightchip_cpu = EightChipCPU::GetInstance( );
+	statusRunning = true;
+	
+	// Chip8 CPU
+	cpu = EightChipCPU::GetInstance();	
 }
 
-//-------------------------------------------------------------------------------------------------
-
-int
-EightChipApp::OnExecute( )
+//--------------------------------------------------
+int EightChipApp::OnExecute(void)
 {
-    // Initialise the emulator (GFX, CPU, ...)
-    if ( OnInit( ) == false )
-        return -1;
+	// Initializes the emulator (gfx, cpu, etc.)
+	if(OnInit() == false)
+		return -1;
+	
+	// Emulator's main loop, executes the emulation cycles (opcodes, etc.)
+	while(statusRunning)
+	{
+		OnLoop();
+	}
 
-    // Executes the emulation cycles (opcodes, etc.) into a main loop
-    while ( statusRunning )
-    {
-        OnLoop( );
-    }
+	// Necessary clean up.
+	OnCleanup();
 
-    // Clear
-    OnCleanup( );
+	return 0;
+}
+//--------------------------------------------------
 
-    return 0;
+int _tmain(int argc, _TCHAR* argv[])
+{
+	EightChipApp myEmulator;
+
+	return myEmulator.OnExecute();
 }
 
-//-------------------------------------------------------------------------------------------------
-
-int
-_tmain( int argc, _TCHAR* argv[ ] )
-{
-    EightChipApp myEmulator;
-
-    return myEmulator.OnExecute( );
-}

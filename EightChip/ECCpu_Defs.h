@@ -3,32 +3,33 @@
 
 #include <map>
 
-//-------------------------------------------------------------------------------------------------
-// We need variables of sizes 8-bits / 16-bits (word) which are given by the following typedefs
-typedef unsigned char BYTE;       // 1 byte  (0 - 255)
-typedef unsigned short int WORD;  // 2 bytes (0 - 65535)
+//---------------------------------
+// We need variables of sizes 8-bits / 16-bits (word)
+// which are given by the following typedefs
 
-//-------------------------------------------------------------------------------------------------
+typedef unsigned char		BYTE;	// 1 byte  (0 - 255)
+typedef unsigned short int	WORD;	// 2 bytes (0 - 65535)
+
+//---------------------------------
 // Memory of 0xFFF bytes.
 static const int ROMSIZE = 0xFFF;
 
-//-------------------------------------------------------------------------------------------------
+//----------------------------------
 // Settings map
-typedef std::map< std::string, std::string > SETTINGS_MAP;
+typedef std::map<std::string, std::string> SETTINGS_MAP;
 
-//-------------------------------------------------------------------------------------------------
-// Rom name shouldn't be hard coded...
+//----------------------------------
+// Rom name shouldn't be hardcoded...
 static const std::string ROM_NAME = "RomFile";
 
-//-------------------------------------------------------------------------------------------------
+//----------------------------------
 // Window properties
-static const char* WINDOW_CAPTION = "EightChip Emulator";
-static const int WINDOW_HEIGHT = 640;
-static const int WINDOW_WIDTH = 1280;
-
-//-------------------------------------------------------------------------------------------------
-// Error codes are faster in runtime than try/catch clauses
-
+static const char* WINDOW_CAPTION	= "EightChip Emulator";
+static const int   WINDOW_HEIGHT	= 640;
+static const int   WINDOW_WIDTH		= 1280;
+//----------------------------------
+// ERRORS
+// Error codes are faster in runtime than try/catch clauses...
 #define ERR000 "OpcodePerSecond paramaters could not be found in the settings file!"
 #define ERR001 "The rom could not be found in the settings file!"
 #define ERR002 "Error loading settings.ini file!"
@@ -40,8 +41,4 @@ static const int WINDOW_WIDTH = 1280;
 #define ERR008 "settings.ini appears to be malformed!"
 #define ERR009 "No settings could be found in game.ini"
 
-//-------------------------------------------------------------------------------------------------
-
 #endif
-
-//-------------------------------------------------------------------------------------------------

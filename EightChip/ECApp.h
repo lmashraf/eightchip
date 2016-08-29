@@ -6,29 +6,24 @@
 #include "ECCpu.h"
 #include "ECCpu_Defs.h"
 
-//-------------------------------------------------------------------------------------------------
-
 class EightChipApp
 {
-public:
-    EightChipApp( );
+	private:
+		bool			statusRunning;
 
-public:
-    int OnExecute( );
-    bool OnInit( );
-    void OnLoop( );
-    void OnCleanup( );
+		EightChipCPU*	cpu;
+		SETTINGS_MAP	settings;
 
-private:
-    bool statusRunning;
+	public:
+		EightChipApp();
+			int OnExecute(void);
 
-    EightChipCPU* eightchip_cpu;
+	public:
+		bool OnInit(void);
 
-    SETTINGS_MAP settings;
+		void OnLoop(void);
+
+		void OnCleanup(void);
 };
 
-//-------------------------------------------------------------------------------------------------
-
 #endif
-
-//-------------------------------------------------------------------------------------------------
