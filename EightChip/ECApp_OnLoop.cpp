@@ -2,7 +2,12 @@
 
 #include "ECApp.h"
 
-void EightChipApp::OnLoop(void)
+//-------------------------------------------------------------------------------------------------
+
+void
+EightChipApp::OnLoop( )
 {
-	ecEmulate::EmulateCycle(this->cpu, this->settings, this->statusRunning);
+    ecemulate::EmulateCycle( this->eightchip_cpu, this->settings, this->statusRunning );
 }
+
+//-------------------------------------------------------------------------------------------------
