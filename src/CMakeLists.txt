@@ -1,3 +1,4 @@
+# Find
 file(
     GLOB_RECURSE EMULATOR_SOURCES
     ${CMAKE_CURRENT_SOURCE_DIR}/app/*.cpp
@@ -7,5 +8,13 @@ file(
 
 add_executable( ${EMULATOR_BINARY} ${EMULATOR_SOURCES} )
 
-target_include_directories( ${EMULATOR_BINARY} PRIVATE ${sdl_SOURCE_DIR}/include/ )
-target_link_libraries( ${EMULATOR_BINARY} sdl2 )
+# Include external libraries
+target_include_directories( ${EMULATOR_BINARY} PRIVATE ${sdl2_SOURCE_DIR}/include/ )
+
+# Link external libraries
+target_link_libraries( ${EMULATOR_BINARY}
+            SDL2main
+            SDL2-static
+            ${OPENGL_LIBRARIES}
+            )
+

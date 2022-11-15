@@ -20,7 +20,7 @@ class EightChipCPU;
 
 namespace ecgfx
 {
-void SetupOpenGL( void );
+void SetupOpenGL( SDL_Window* window );
 bool SetupSDL( void );
 
 void DrawGraphics( EightChipCPU* cpu );

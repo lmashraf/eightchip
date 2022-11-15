@@ -104,14 +104,18 @@ ecgfx::DrawGraphics( EightChipCPU* cpu )
 
     glDrawPixels( WINDOW_WIDTH, WINDOW_HEIGHT, GL_RGB, GL_UNSIGNED_BYTE, cpu->m_ScreenPixels );
 
-    SDL_GL_SwapBuffers( );
+    //SDL_GL_SwapBuffers( );
 
     glFlush( );
 }
 //-------------------------------------------------------------------------------------------------
 void
-ecgfx::SetupOpenGL( )
+ecgfx::SetupOpenGL( SDL_Window* window )
 {
+    // Create an OpenGL context associated with the window
+    SDL_GLContext glcontext = SDL_GL_CreateContext( window );
+
+    // GL calls
     glViewport( 0, 0, WINDOW_WIDTH, WINDOW_HEIGHT );
     glMatrixMode( GL_MODELVIEW );
     glLoadIdentity( );
@@ -120,11 +124,15 @@ ecgfx::SetupOpenGL( )
     glClear( GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT );
     glShadeModel( GL_FLAT );
 
+    SDL_GL_SwapWindow( window );
+
     glEnable( GL_TEXTURE_2D );
     glDisable( GL_DEPTH_TEST );
     glDisable( GL_CULL_FACE );
     glDisable( GL_DITHER );
     glDisable( GL_BLEND );
+
+    SDL_GL_DeleteContext( glcontext );
 }
 
 //-------------------------------------------------------------------------------------------------
@@ -136,16 +144,15 @@ ecgfx::SetupSDL( )
         ecsyst::LogMessage( ERR005 );
         return false;
     }
-    if ( SDL_SetVideoMode( WINDOW_WIDTH, WINDOW_HEIGHT, 8, SDL_OPENGL ) == NULL )
+    SDL_Window *window =  SDL_CreateWindow( WINDOW_CAPTION, SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, WINDOW_WIDTH, WINDOW_HEIGHT, SDL_WINDOW_OPENGL );
+    if ( window == nullptr )
     {
         ecsyst::LogMessage( ERR006 );
         return false;
     }
 
     // OpenGL
-    SetupOpenGL( );
-
-    SDL_WM_SetCaption( WINDOW_CAPTION, NULL );
+    SetupOpenGL( window );
 
     return true;
 }
