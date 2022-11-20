@@ -23,48 +23,40 @@ ecsyst::LogMessage( std::string message )
 bool
 ecemulate::LoadSettings( SETTINGS_MAP& settings )
 {
-    const BYTE MAXLINE = 0xFF;
-    char line[ MAXLINE ];
-    std::string settingName, settingValue;
+    std::string line;
 
-    std::ifstream file;
-    file.open( "settings.ini" );
+    std::ifstream fileStream;
+    fileStream.open( "settings.ini" );
 
-    if ( !file.is_open( ) )
+    if ( fileStream.is_open( ) )
+    {
+        std::string key, value;
+
+        while ( getline( fileStream, line ) )
+        {
+            auto delimiter_pos = line.find( ":" );
+            key = line.substr( 0, delimiter_pos );
+            value = line.substr( delimiter_pos + 1 );
+
+            // check for errors
+            if ( key.empty( ) || value.empty( ) )
+            {
+                ecsyst::LogMessage( ERR008 );
+                fileStream.close( );
+                return false;
+            }
+
+            // add to settings map
+            settings.insert( std::make_pair( key, value ) );
+        }
+    }
+    else
     {
         ecsyst::LogMessage( ERR007 );
         return false;
     }
 
-    while ( !file.eof( ) )
-    {
-        memset( line, '\0', sizeof( line ) );
-
-        file.getline( line, MAXLINE );
-
-        // get the setting's name
-        char* name = 0;
-        name = strtok( line, ":" );
-        settingName = name;
-
-        // get the setting's value
-        char* value = 0;
-        value = strtok( NULL, "!" );
-        settingValue = value;
-
-        // check for errors
-        if ( value == 0 || name == 0 || settingName.empty( ) || settingValue.empty( ) )
-        {
-            ecsyst::LogMessage( ERR008 );
-            file.close( );
-            return false;
-        }
-
-        // add to settings map
-        settings.insert( std::make_pair( settingName, settingValue ) );
-    }
-
-    file.close( );
+    fileStream.close( );
 
     if ( settings.empty( ) )
     {
@@ -79,6 +71,7 @@ bool
 ecemulate::LoadRom( EightChipCPU* cpu, const SETTINGS_MAP& settings )
 {
     bool res = false;
+
     SETTINGS_MAP::const_iterator it = settings.find( ROM_NAME );
 
     // If the rom isn't found, the map's iterator is a the end element.
