@@ -13,8 +13,8 @@ target_include_directories( ${EMULATOR_BINARY} PRIVATE ${sdl2_SOURCE_DIR}/includ
 
 # Link external libraries
 target_link_libraries( ${EMULATOR_BINARY}
-            SDL2main
-            SDL2-static
+            SDL2::SDL2main
+            SDL2::SDL2-static
             ${OPENGL_LIBRARIES}
-            )
+)
 
