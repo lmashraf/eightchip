@@ -10,40 +10,7 @@
 #include <cstring>
 #include <vector>
 
-#include "ECCpu_Defs.h"
-
-//-------------------------------------------------------------------------------------------------
-
-class EightChipCPU;
-
-//-------------------------------------------------------------------------------------------------
-
-namespace ecgfx
-{
-void SetupOpenGL( SDL_Window* window );
-bool SetupSDL( void );
-
-void DrawGraphics( EightChipCPU* cpu );
-};
-
-//-------------------------------------------------------------------------------------------------
-
-namespace ecemulate
-{
-bool LoadRom( EightChipCPU* cpu, const SETTINGS_MAP& settings );
-bool LoadSettings( SETTINGS_MAP& settings );
-
-void SetupInput( EightChipCPU* cpu, SDL_Event event );
-
-void EmulateCycle( EightChipCPU* cpu, const SETTINGS_MAP& settings, bool& status );
-};
-
-//-------------------------------------------------------------------------------------------------
-
-namespace ecsyst
-{
-void LogMessage( std::string message );
-};
+#include "ECGlobals.h"
 
 //-------------------------------------------------------------------------------------------------
 
