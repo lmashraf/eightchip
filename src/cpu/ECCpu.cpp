@@ -1,11 +1,9 @@
 #include "ECCpu.h"
 
 //-------------------------------------------------------------------------------------------------
-
 EightChipCPU* EightChipCPU::m_Instance = nullptr;
 
 //-------------------------------------------------------------------------------------------------
-
 EightChipCPU*
 EightChipCPU::GetInstance( )
 {
@@ -16,13 +14,11 @@ EightChipCPU::GetInstance( )
 }
 
 //-------------------------------------------------------------------------------------------------
-
 EightChipCPU::EightChipCPU( )
 {
 }
 
 //-------------------------------------------------------------------------------------------------
-
 EightChipCPU::~EightChipCPU( )
 {
 }
@@ -99,7 +95,7 @@ EightChipCPU::PlayBeep( )
  * All we need to do is to load the game into 0x200 and initialise other variables.
  * The program counter is the variable used to point which part of memory is currently executing.
  * It should be set to the first instruction of the game which is obviously, in this case, 0x200
- */
+ **/
 void
 EightChipCPU::CPUReset( )
 {
@@ -153,7 +149,7 @@ EightChipCPU::GetKeyPressed( )
  *
  * Tip:
  * The first byte was shifted 8 places to make room for the second.
- */
+ **/
 WORD
 EightChipCPU::GetNextOpCode( )
 {
@@ -175,7 +171,7 @@ EightChipCPU::GetNextOpCode( )
 }
 
 //-------------------------------------------------------------------------------------------------
-/*
+/**
  * Operation Codes are portion of instruction which indicates
  * the operation to be performed.
  * The Chip-8 has 35 OpCode which are all 16-bits long:
@@ -183,7 +179,7 @@ EightChipCPU::GetNextOpCode( )
  *		- KK	: 8-bit constant
  *		- K	: 4-bit constant
  *		- X & Y: 4-bit register identifier.
- */
+ **/
 //-------------------------------------------------------------------------------------------------
 // CLS
 // Clear the display
@@ -959,7 +955,7 @@ EightChipCPU::DecodeOpCodeF( WORD opcode )
  * This method reads the OpCode from the next 16-bits memory block by evaluating the MSB
  * then executes the corresponding OpCode function.
  * As it should be noted, the Most Significant Bit 'was' stored first.
- */
+ **/
 void
 EightChipCPU::ExecuteNextOpCode( )
 {
